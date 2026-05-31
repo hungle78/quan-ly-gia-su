@@ -251,7 +251,7 @@
             <div class="cell-header"><span class="date-number">${date}</span>
               <label class="checkbox-container"><input type="checkbox" data-date="${date}" ${isCh?'checked':''} onchange="toggleDate('${k}')"><span class="checkmark"></span></label>
             </div>
-            <div class="note-badge ${note? (note.match(/h/i)?'has-hours':'') : 'is-empty'}" onclick="editNote('${nK}')">${note||'<span class="material-symbols-rounded" style="font-size:14px">edit</span> Ghi chú'}</div>
+            <div class="note-badge ${note? (note.match(/h/i)?'has-hours':'') : 'is-empty'}" onclick="editNote('${nK}')">${note? note.replace(/#/g, '') : '<span class="material-symbols-rounded" style="font-size:14px">edit</span> Ghi chú'}</div>
           </div></td>`;
           date++;
         }
