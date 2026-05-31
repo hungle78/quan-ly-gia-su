@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản Lý Gia Sư | Admin Dashboard</title>
+    <link rel="icon" type="image/png" href="7630510.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --danger-light: #fee2e2;
+            --success: #10b981;
+            --bg-body: #f3f4f6;
+            --bg-surface: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --radius-lg: 16px;
+            --radius-md: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        /* Header hiển thị người dùng */
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 12px 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+            .toolbar-row:last-child {
+                margin-bottom: 0;
+            }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+            .input-group label {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+            }
+
+        select, input[type=text], input[type=number] {
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 14px;
+            background: #f9fafb;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            select:focus, input[type=text]:focus, input[type=number]:focus {
+                border-color: var(--primary);
+                background: #fff;
+                box-shadow: 0 0 0 3px var(--primary-light);
+            }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                background: var(--primary-hover);
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+            .btn-success:hover {
+                background: #059669;
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .btn-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+            .btn-danger:hover {
+                background: var(--danger);
+                color: white;
+            }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+            .btn-outline:hover {
+                background: #f3f4f6;
+                border-color: #d1d5db;
+            }
+
+        .btn-dark {
+            background: #0f172a;
+            color: white;
+        }
+
+            .btn-dark:hover {
+                background: #334155;
+            }
+
+        .icon-sm {
+            font-size: 18px;
+        }
+
+        .calendar-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            min-width: 700px;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            padding: 12px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            width: 14.28%;
+            height: 100px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            padding: 0;
+            transition: background-color 0.2s;
+        }
+
+            td:last-child {
+                border-right: none;
+            }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        td:hover {
+            background-color: #f8fafc;
+        }
+
+        .cell-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 8px;
+        }
+
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: auto;
+        }
+
+        .date-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .checkbox-container {
+            display: block;
+            position: relative;
+            cursor: pointer;
+            font-size: 22px;
+            user-select: none;
+            width: 24px;
+            height: 24px;
+        }
+
+            .checkbox-container input {
+                position: absolute;
+                opacity: 0;
+                cursor: pointer;
+                height: 0;
+                width: 0;
+            }
+
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #fff;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: var(--primary);
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .note-badge {
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 6px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+            .note-badge:hover {
+                filter: brightness(0.95);
+            }
+
+            .note-badge.has-hours {
+                background: var(--danger-light);
+                color: var(--danger);
+            }
+
+            .note-badge.is-empty {
+                background: transparent;
+                border: 1px dashed #cbd5e1;
+                color: #94a3b8;
+            }
+
+        .summary-section {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, var(--primary) 0%, #3730a3 100%);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            background: rgba(255, 255, 255, 0.25);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+        }
+
+            .stat-icon span {
+                font-size: 28px;
+            }
+
+        .stat-info p {
+            font-size: 13px;
+            opacity: 0.95;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+        }
+
+        .stat-info h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff !important;
+            margin: 0;
+        }
+
+        .print-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+            .print-actions button {
+                flex: 1;
+                padding: 12px;
+                font-size: 15px;
+            }
+
+        .global-toggle-btn {
+            width: 100%;
+            justify-content: center;
+            border-style: dashed;
+            color: var(--text-muted);
+        }
+
+        .global-summary-box {
+            margin-top: 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #047857;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* Modal Đăng nhập / Chữ ký */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 450px;
+            padding: 24px;
+            animation: popIn 0.2s ease-out;
+        }
+
+        #loginOverlay {
+            background: var(--bg-body);
+            z-index: 9999;
+            backdrop-filter: none;
+            display: flex;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #signaturePad {
+            width: 100%;
+            height: 160px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* CSS BẢN IN & ẢNH */
+        .print-area {
+            display: none;
+            background: #fff;
+            color: #000;
+            font-family: 'Inter', 'Times New Roman', serif;
+        }
+
+            .print-area.capture-mode {
+                display: block !important;
+                position: absolute;
+                top: -10000px;
+                left: -10000px;
+                width: 800px;
+                padding: 40px;
+                box-sizing: border-box;
+            }
+
+        .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+            .print-header h1 {
+                font-size: 26px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                color: #111827;
+            }
+
+            .print-header p {
+                font-size: 16px;
+                margin: 0;
+                color: #4b5563;
+            }
+
+        .print-info {
+            margin-bottom: 15px;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
+        .print-table-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            table-layout: fixed;
+        }
+
+            .print-table-grid th, .print-table-grid td {
+                border: 1px solid #cbd5e1;
+                vertical-align: top;
+                overflow: hidden;
+            }
+
+            .print-table-grid th {
+                background-color: #f1f5f9 !important;
+                padding: 10px 4px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 13px;
+            }
+
+            .print-table-grid td {
+                height: 75px;
+                padding: 4px;
+            }
+
+        .p-cell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .p-date {
+            font-weight: bold;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 2px;
+        }
+
+        .p-mark {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #10b981;
+        }
+
+        .p-note {
+            background: #f1f5f9 !important;
+            border-radius: 4px;
+            padding: 3px;
+            font-size: 11px;
+            text-align: center;
+            color: #475569;
+            margin-top: auto;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+            .p-note.p-hours {
+                background: #fee2e2 !important;
+                color: #ef4444;
+                border-color: #fca5a5;
+                font-weight: bold;
+            }
+
+        .print-summary {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+            .print-summary table {
+                border-collapse: collapse;
+                width: 340px;
+            }
+
+            .print-summary td {
+                padding: 8px;
+                border: 1px solid #cbd5e1;
+                font-size: 15px;
+            }
+
+                .print-summary td:last-child {
+                    text-align: right;
+                    font-weight: bold;
+                }
+
+        .print-footer {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            font-size: 15px;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        .signature-img {
+            height: 80px;
+            display: inline-block;
+            object-fit: contain;
+            margin-top: 5px;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                display: none !important;
+            }
+
+            .modal-overlay {
+                display: none !important;
+            }
+
+            .print-area {
+                display: block !important;
+                width: 100%;
+            }
+
+            .print-table-grid th, .p-note {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay" class="modal-overlay">
+        <div class="card" style="max-width: 400px; text-align: center; width: 90%;">
+            <div style="background: var(--primary-light); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                <span class="material-symbols-rounded" style="color: var(--primary); font-size: 32px;">lock</span>
+            </div>
+            <h2 style="justify-content: center; margin-bottom: 10px;">Xác Thực Bảo Mật</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px;">Đăng nhập để đồng bộ dữ liệu lịch dạy của bạn lên đám mây.</p>
+            <button class="btn-outline" onclick="loginWithGoogle()" style="width: 100%; padding: 12px; font-size: 15px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px; height:20px; margin-right:8px;" />
+                Đăng nhập bằng Google
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="user-header">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="userEmail">Đang tải...</span>
+            </div>
+            <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="logout()">
+                <span class="material-symbols-rounded icon-sm">logout</span> Đăng xuất
+            </button>
+        </div>
+
+        <div class="card">
+            <h2><span class="material-symbols-rounded">calendar_month</span> Quản lý Lịch Gia Sư</h2>
+            <div class="toolbar-row">
+                <div class="input-group"><label>Chọn học sinh</label><select id="studentSelect"></select></div>
+                <div class="input-group">
+                    <label>Thêm học sinh mới</label>
+                    <div class="btn-group">
+                        <input type="text" id="newStudent" placeholder="Nhập tên..." style="width:100%;" />
+                        <button class="btn-primary" onclick="addStudent()" title="Thêm"><span class="material-symbols-rounded icon-sm">add</span></button>
+                    </div>
+                </div>
+                <div class="btn-group" style="padding-bottom: 2px;">
+                    <button class="btn-outline" onclick="renameStudent()" title="Đổi tên"><span class="material-symbols-rounded icon-sm">edit</span> Sửa</button>
+                    <button class="btn-danger" onclick="removeStudent()" title="Xoá"><span class="material-symbols-rounded icon-sm">delete</span> Xoá</button>
+                </div>
+            </div>
+            <div class="toolbar-row">
+                <div class="input-group"><label>Tháng</label><select id="monthSelect"></select></div>
+                <div class="input-group"><label>Năm</label><select id="yearSelect"></select></div>
+                <div class="input-group"><label>Đơn giá / Buổi (VNĐ)</label><input type="number" id="priceInput" value="200000" /></div>
+                <div class="btn-group" style="padding-bottom: 2px;">
+                    <button class="btn-outline" onclick="clearCheckboxes()" title="Xoá toàn bộ lịch tháng này"><span class="material-symbols-rounded icon-sm">mop</span> Làm mới</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div class="calendar-wrapper" id="calendarContainer"></div>
+        </div>
+
+        <div class="summary-section">
+            <div class="stat-card">
+                <div class="stat-icon"><span class="material-symbols-rounded">check_circle</span></div>
+                <div class="stat-info"><p>Số buổi đã dạy</p><h3 id="sessionCount">0 buổi</h3></div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+                <div class="stat-icon"><span class="material-symbols-rounded">payments</span></div>
+                <div class="stat-info"><p>Tổng tiền học sinh này</p><h3 id="totalMoney">0 VNĐ</h3></div>
+            </div>
+        </div>
+
+        <div class="print-actions">
+            <button class="btn-success" onclick="downloadImage()"><span class="material-symbols-rounded">image</span> Tải Ảnh Hóa Đơn (PNG)</button>
+            <button class="btn-dark" onclick="printInvoice()"><span class="material-symbols-rounded">print</span> In Bảng Giấy (PDF)</button>
+        </div>
+
+        <div class="card" style="padding: 16px; text-align: center;">
+            <button class="btn-outline global-toggle-btn" onclick="toggleGlobalSummary()">
+                <span class="material-symbols-rounded icon-sm">account_balance</span> Bật / Tắt thống kê doanh thu tất cả học sinh
+            </button>
+            <div id="globalSummary" class="global-summary-box" style="display:none;"></div>
+
+            <div style="margin-top: 15px; font-size: 13px; color: #64748b; font-weight: 500;">
+                💡 Mẹo: Nhấn tổ hợp phím <strong style="color:var(--primary);">Ctrl + Q</strong> để cài đặt chữ ký và người lập phiếu.
+            </div>
+        </div>
+    </div>
+
+    <div id="signatureModal" class="modal-overlay">
+        <div class="modal-content card">
+            <h3><span class="material-symbols-rounded">draw</span> Cài đặt Chữ ký</h3>
+            <div class="input-group" style="margin-top: 15px;">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Vẽ chữ ký của bạn:</span>
+                    <button class="btn-outline" style="padding: 2px 8px; font-size: 11px; border-color:#cbd5e1;" onclick="clearSignature()">Xóa vẽ lại</button>
+                </label>
+                <canvas id="signaturePad" width="400" height="160"></canvas>
+            </div>
+            <div class="input-group" style="margin-top: 15px;">
+                <label>Họ và Tên</label>
+                <input type="text" id="adminNameInput" placeholder="VD: Lê Văn Hưng" />
+            </div>
+            <div class="input-group" style="margin-top: 15px;">
+                <label>Chức danh / Ghi chú</label>
+                <input type="text" id="adminRoleInput" placeholder="VD: Người Lập Phiếu" />
+            </div>
+            <div class="btn-group" style="margin-top: 24px; justify-content: flex-end;">
+                <button class="btn-outline" onclick="closeSignatureModal()">Hủy</button>
+                <button class="btn-primary" onclick="saveSignature()">Lưu thông tin</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printArea" class="print-area"></div>
+
+    <script>
+        /* =========================================
+           1. KHỞI TẠO FIREBASE (CẤU HÌNH CỦA BẠN)
+           ========================================= */
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVT2pCRWPQ4iEVKefDBswjuQFp0gnPm1g",
+            authDomain: "quan-ly-gia-su.firebaseapp.com",
+            projectId: "quan-ly-gia-su",
+            storageBucket: "quan-ly-gia-su.firebasestorage.app",
+            messagingSenderId: "106651824541",
+            appId: "1:106651824541:web:a8246474a8afd6b9ea7f74",
+            measurementId: "G-1J1HF70X5S"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let syncTimeout = null;
+
+        /* =========================================
+           2. HỆ THỐNG XÁC THỰC (ĐĂNG NHẬP / ĐĂNG XUẤT)
+           ========================================= */
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('userEmail').innerText = user.email;
+                document.getElementById('userAvatar').innerText = user.email.charAt(0).toUpperCase();
+
+                // Tải dữ liệu của tài khoản này từ Firebase xuống máy
+                loadFromFirebase(user.uid);
+            } else {
+                currentUser = null;
+                document.getElementById('loginOverlay').style.display = 'flex';
+                // Đăng xuất thì xóa rỗng UI & Xóa dữ liệu tạm để bảo mật
+                localStorage.clear();
+                document.getElementById('calendarContainer').innerHTML = '';
+                updateStats(0, 0);
+            }
+        });
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                alert('Lỗi đăng nhập: ' + error.message);
+            });
+        }
+
+        function logout() {
+            if (confirm("Bạn có muốn đăng xuất không?")) {
+                auth.signOut();
+            }
+        }
+
+        /* =========================================
+           3. ĐỘNG CƠ ĐỒNG BỘ ĐÁM MÂY (CLOUD SYNC)
+           ========================================= */
+        // Tải dữ liệu từ mây về khi vừa đăng nhập
+        function loadFromFirebase(uid) {
+            db.collection('tutor_data').doc(uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    localStorage.clear();
+                    Object.keys(data).forEach(key => localStorage.setItem(key, data[key]));
+                }
+                // Dù có data hay không cũng khởi động lại giao diện
+                startAppUI();
+            }).catch(e => {
+                console.error("Lỗi tải dữ liệu", e);
+                alert("Lỗi tải dữ liệu từ máy chủ đám mây!");
+            });
+        }
+
+        // Đẩy dữ liệu lên mây (Tự động chạy ngầm sau 1.5 giây mỗi khi bạn sửa đổi gì đó)
+        function triggerSync() {
+            if (!currentUser) return;
+            clearTimeout(syncTimeout);
+            syncTimeout = setTimeout(() => {
+                const dataToSync = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    dataToSync[key] = localStorage.getItem(key);
+                }
+                db.collection('tutor_data').doc(currentUser.uid).set(dataToSync)
+                    .then(() => console.log('Đã sao lưu lên Firebase thành công!'))
+                    .catch(e => console.error('Lỗi khi lưu lên Firebase:', e));
+            }, 1500);
+        }
+
+
+        /* =========================================
+           4. LOGIC QUẢN LÝ LỊCH HỌC (NHƯ CŨ + SYNC)
+           ========================================= */
+        const studentSelect = document.getElementById("studentSelect");
+        const priceInput = document.getElementById("priceInput");
+        const defaultStudents = ["Minh", "Lan"];
+        const yearSelect = document.getElementById("yearSelect");
+        const monthSelect = document.getElementById("monthSelect");
+
+        for (let y = 2024; y <= 2030; y++) {
+            let opt = document.createElement("option"); opt.value = y; opt.textContent = y;
+            yearSelect.appendChild(opt);
+        }
+        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+        months.forEach((m, i) => {
+            let opt = document.createElement("option"); opt.value = i; opt.textContent = m;
+            monthSelect.appendChild(opt);
+        });
+
+        function startAppUI() {
+            const now = new Date(); yearSelect.value = now.getFullYear(); monthSelect.value = now.getMonth();
+            loadStudents();
+            if (studentSelect.options.length > 0) studentSelect.dispatchEvent(new Event("change"));
+        }
+
+        function saveStudents() {
+            localStorage.setItem("students", JSON.stringify(Array.from(studentSelect.options).map(opt => opt.value)));
+            triggerSync(); // Đồng bộ
+        }
+
+        function loadStudents() {
+            let students = JSON.parse(localStorage.getItem("students")) || defaultStudents;
+            studentSelect.innerHTML = "";
+            students.forEach(name => { let opt = document.createElement("option"); opt.value = name; opt.textContent = name; studentSelect.appendChild(opt); });
+        }
+
+        function addStudent() {
+            const name = document.getElementById("newStudent").value.trim();
+            if (!name) return alert("Vui lòng nhập tên học sinh!");
+            if ([...studentSelect.options].some(opt => opt.value === name)) return alert("Tên học sinh này đã tồn tại!");
+            let opt = document.createElement("option"); opt.value = name; opt.textContent = name;
+            studentSelect.appendChild(opt); studentSelect.value = name; document.getElementById("newStudent").value = "";
+            saveStudents(); reloadCalendar();
+        }
+
+        function renameStudent() {
+            const oldName = studentSelect.value;
+            if (!oldName) return alert("Hãy chọn một học sinh để đổi tên.");
+            const newName = prompt("Nhập tên mới cho học sinh:", oldName);
+            if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+            const trimmedNewName = newName.trim();
+            if ([...studentSelect.options].some(opt => opt.value === trimmedNewName)) return alert("Tên học sinh này đã tồn tại!");
+
+            const keysToMigrate = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith(oldName + "_")) keysToMigrate.push(key);
+            }
+            keysToMigrate.forEach(oldKey => {
+                const value = localStorage.getItem(oldKey);
+                const newKey = oldKey.replace(oldName + "_", trimmedNewName + "_");
+                localStorage.setItem(newKey, value);
+                localStorage.removeItem(oldKey);
+            });
+
+            let students = JSON.parse(localStorage.getItem("students")) || defaultStudents;
+            const index = students.indexOf(oldName);
+            if (index !== -1) { students[index] = trimmedNewName; localStorage.setItem("students", JSON.stringify(students)); }
+
+            const selectedOption = studentSelect.options[studentSelect.selectedIndex];
+            selectedOption.value = trimmedNewName; selectedOption.textContent = trimmedNewName;
+            reloadCalendar();
+            triggerSync(); // Đồng bộ
+        }
+
+        function removeStudent() {
+            const name = studentSelect.value;
+            if (!name) return alert("Hãy chọn một học sinh để xoá.");
+            if (!confirm(`Bạn có chắc chắn muốn xoá học sinh "${name}" và toàn bộ dữ liệu lịch học của em ấy?`)) return;
+            Object.keys(localStorage).forEach(key => { if (key.startsWith(name + "_")) localStorage.removeItem(key); });
+            studentSelect.remove(studentSelect.selectedIndex);
+            setTimeout(() => {
+                saveStudents();
+                if (studentSelect.options.length > 0) { studentSelect.selectedIndex = 0; studentSelect.dispatchEvent(new Event("change")); }
+                else { document.getElementById("calendarContainer").innerHTML = ""; updateStats(0, 0); }
+                triggerSync(); // Đồng bộ
+            }, 0);
+        }
+
+        function getKey(student, year, month, date) { return `${student}_${year}_${month}_${date}`; }
+        function getNoteKey(student, year, month, date) { return `${student}_${year}_${month}_${date}_note`; }
+
+        function generateCalendar(year, month) {
+            const student = studentSelect.value;
+            const container = document.getElementById("calendarContainer");
+            container.innerHTML = "";
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            const table = document.createElement("table");
+            const trHead = document.createElement("tr");
+            ["CN", "T2", "T3", "T4", "T5", "T6", "T7"].forEach(d => {
+                const th = document.createElement("th"); th.innerText = d; trHead.appendChild(th);
+            });
+            table.appendChild(trHead);
+
+            let date = 1;
+            for (let i = 0; i < 6 && date <= lastDate; i++) {
+                const row = document.createElement("tr");
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement("td");
+                    if (i === 0 && j < firstDay || date > lastDate) {
+                        cell.innerHTML = "";
+                    } else {
+                        const key = getKey(student, year, month, date);
+                        const noteKey = getNoteKey(student, year, month, date);
+
+                        const contentDiv = document.createElement("div"); contentDiv.className = "cell-content";
+                        const cellHeader = document.createElement("div"); cellHeader.className = "cell-header";
+                        const dateSpan = document.createElement("span"); dateSpan.className = "date-number"; dateSpan.innerText = date;
+
+                        const label = document.createElement("label"); label.className = "checkbox-container";
+                        const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.dataset.date = date; checkbox.checked = localStorage.getItem(key) === "true";
+                        const checkmark = document.createElement("span"); checkmark.className = "checkmark";
+
+                        checkbox.onchange = () => {
+                            localStorage.setItem(key, checkbox.checked);
+                            countSelected();
+                            if (document.getElementById("globalSummary").style.display === "flex") updateGlobalSummary();
+                            triggerSync(); // Đồng bộ
+                        };
+                        label.appendChild(checkbox); label.appendChild(checkmark);
+                        cellHeader.appendChild(dateSpan); cellHeader.appendChild(label);
+
+                        const note = localStorage.getItem(noteKey) || "";
+                        const noteSpan = document.createElement("div");
+
+                        const updateNoteUI = (noteText) => {
+                            if (!noteText) { noteSpan.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">edit</span> Ghi chú`; noteSpan.className = "note-badge is-empty"; }
+                            else if (noteText.match(/#(\d+(\.\d+)?)h/i)) { noteSpan.innerText = noteText.replace(/#/g, ''); noteSpan.className = "note-badge has-hours"; }
+                            else { noteSpan.innerText = noteText; noteSpan.className = "note-badge"; }
+                        };
+
+                        updateNoteUI(note);
+                        noteSpan.onclick = () => {
+                            const text = prompt("Ghi chú buổi học (VD: #2h, #1.5h... để tính theo giờ):", localStorage.getItem(noteKey) || "");
+                            if (text !== null) {
+                                localStorage.setItem(noteKey, text); updateNoteUI(text); countSelected();
+                                if (document.getElementById("globalSummary").style.display === "flex") updateGlobalSummary();
+                                triggerSync(); // Đồng bộ
+                            }
+                        };
+
+                        contentDiv.appendChild(cellHeader); contentDiv.appendChild(noteSpan); cell.appendChild(contentDiv);
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            container.appendChild(table); countSelected();
+        }
+
+        function clearCheckboxes() {
+            const y = +yearSelect.value, m = +monthSelect.value, student = studentSelect.value;
+            if (!confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch học và ghi chú của tháng này?")) return;
+            for (let d = 1; d <= 31; d++) { localStorage.removeItem(getKey(student, y, m, d)); localStorage.removeItem(getNoteKey(student, y, m, d)); }
+            reloadCalendar(); if (document.getElementById("globalSummary").style.display === "flex") updateGlobalSummary();
+            triggerSync(); // Đồng bộ
+        }
+
+        function countSelected() {
+            if (!studentSelect.value) return;
+            const student = studentSelect.value, y = +yearSelect.value, m = +monthSelect.value, price = +priceInput.value || 200000;
+            const checkboxes = document.querySelectorAll("#calendarContainer input[type=checkbox]");
+            let count = 0, totalMoney = 0;
+
+            checkboxes.forEach(c => {
+                if (c.checked) {
+                    count++;
+                    const note = localStorage.getItem(getNoteKey(student, y, m, c.dataset.date)) || "";
+                    const match = note.match(/#(\d+(\.\d+)?)h/i);
+                    if (match) totalMoney += price * (parseFloat(match[1]) / 2);
+                    else totalMoney += price;
+                }
+            });
+            updateStats(count, totalMoney);
+        }
+
+        function updateStats(count, money) { document.getElementById("sessionCount").innerText = `${count} buổi`; document.getElementById("totalMoney").innerText = `${money.toLocaleString()} VNĐ`; }
+        function reloadCalendar() { if (studentSelect.options.length > 0) generateCalendar(+yearSelect.value, +monthSelect.value); }
+
+        yearSelect.onchange = reloadCalendar; monthSelect.onchange = reloadCalendar;
+        studentSelect.onchange = () => { priceInput.value = localStorage.getItem(studentSelect.value + "_price") || 200000; reloadCalendar(); };
+        priceInput.onchange = () => { localStorage.setItem(studentSelect.value + "_price", priceInput.value); countSelected(); if (document.getElementById("globalSummary").style.display === "flex") updateGlobalSummary(); triggerSync(); };
+
+
+        function toggleGlobalSummary() {
+            const globalEl = document.getElementById("globalSummary");
+            if (globalEl.style.display === "none") { updateGlobalSummary(); globalEl.style.display = "flex"; } else globalEl.style.display = "none";
+        }
+
+        function updateGlobalSummary() {
+            const year = +yearSelect.value, month = +monthSelect.value, students = Array.from(studentSelect.options).map(opt => opt.value);
+            let totalAll = 0;
+            students.forEach(student => {
+                const price = +(localStorage.getItem(student + "_price") || 200000);
+                for (let d = 1; d <= 31; d++) {
+                    if (localStorage.getItem(`${student}_${year}_${month}_${d}`) === "true") {
+                        const match = (localStorage.getItem(`${student}_${year}_${month}_${d}_note`) || "").match(/#(\d+(\.\d+)?)h/i);
+                        if (match) totalAll += price * (parseFloat(match[1]) / 2); else totalAll += price;
+                    }
+                }
+            });
+            document.getElementById("globalSummary").innerHTML = `<span class="material-symbols-rounded">diamond</span> Tổng doanh thu tháng ${month + 1}: ${totalAll.toLocaleString()} VNĐ`;
+        }
+
+        /* =========================================
+           5. BẢNG VẼ CHỮ KÝ (CANVAS)
+           ========================================= */
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let isCanvasBlank = true;
+
+        function getPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            if (evt.touches && evt.touches.length > 0) { return { x: (evt.touches[0].clientX - rect.left) * scaleX, y: (evt.touches[0].clientY - rect.top) * scaleY }; }
+            return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true; isCanvasBlank = false;
+            const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+            if (e.type === 'touchstart') e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e); ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = '#1e3a8a'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.stroke();
+            if (e.type === 'touchmove') e.preventDefault();
+        }
+        function stopDrawing() { isDrawing = false; }
+
+        canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); canvas.addEventListener('touchend', stopDrawing);
+
+        function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); isCanvasBlank = true; }
+
+        document.addEventListener("keydown", function (e) { if (e.ctrlKey && e.key.toLowerCase() === 'q') { e.preventDefault(); openSignatureModal(); } });
+
+        function openSignatureModal() {
+            document.getElementById("adminNameInput").value = localStorage.getItem("adminName") || "Hưng";
+            document.getElementById("adminRoleInput").value = localStorage.getItem("adminRole") || "Người Lập Phiếu";
+            const savedSig = localStorage.getItem("adminSignatureData");
+            if (savedSig) {
+                isCanvasBlank = false;
+                const img = new Image();
+                img.onload = function () { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); };
+                img.src = savedSig;
+            } else { clearSignature(); }
+            document.getElementById("signatureModal").style.display = "flex";
+        }
+
+        function closeSignatureModal() { document.getElementById("signatureModal").style.display = "none"; }
+
+        function saveSignature() {
+            localStorage.setItem("adminName", document.getElementById("adminNameInput").value.trim() || "Hưng");
+            localStorage.setItem("adminRole", document.getElementById("adminRoleInput").value.trim() || "Người Lập Phiếu");
+            if (!isCanvasBlank) localStorage.setItem("adminSignatureData", canvas.toDataURL()); else localStorage.removeItem("adminSignatureData");
+            closeSignatureModal();
+            triggerSync(); // Đồng bộ chữ ký
+            alert("Đã lưu thông tin chữ ký thành công!");
+        }
+
+        /* =========================================
+           6. XUẤT ẢNH PNG VÀ IN PDF
+           ========================================= */
+        function generateInvoiceHTML() {
+            const student = studentSelect.value;
+            if (!student) { alert("Vui lòng chọn học sinh!"); return null; }
+
+            const y = +yearSelect.value, m = +monthSelect.value, price = +priceInput.value || 200000;
+            let count = 0, totalMoney = 0;
+            const firstDay = new Date(y, m, 1).getDay(), lastDate = new Date(y, m + 1, 0).getDate();
+
+            let gridHTML = `<table class="print-table-grid">
+          <thead><tr><th>CN</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th></tr></thead><tbody>`;
+
+            let date = 1;
+            for (let i = 0; i < 6 && date <= lastDate; i++) {
+                gridHTML += "<tr>";
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay || date > lastDate) { gridHTML += `<td></td>`; }
+                    else {
+                        const key = getKey(student, y, m, date), noteKey = getNoteKey(student, y, m, date);
+                        const isChecked = localStorage.getItem(key) === "true", note = localStorage.getItem(noteKey) || "";
+                        let markHTML = "", noteHTML = "";
+
+                        if (isChecked) {
+                            count++;
+                            const match = note.match(/#(\d+(\.\d+)?)h/i);
+                            if (match) totalMoney += price * (parseFloat(match[1]) / 2); else totalMoney += price;
+                            markHTML = `<div class="p-mark">✔️</div>`;
+                        }
+                        if (note) {
+                            if (note.match(/#(\d+(\.\d+)?)h/i)) noteHTML = `<div class="p-note p-hours">${note.replace(/#/g, '')}</div>`;
+                            else noteHTML = `<div class="p-note">${note}</div>`;
+                        }
+                        gridHTML += `<td><div class="p-cell"><div class="p-date">${date}</div>${markHTML}${noteHTML}</div></td>`;
+                        date++;
+                    }
+                }
+                gridHTML += "</tr>";
+            }
+            gridHTML += `</tbody></table>`;
+
+            const today = new Date();
+            const todayStr = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
+            const adminName = localStorage.getItem("adminName") || "Hưng";
+            const adminRole = localStorage.getItem("adminRole") || "Người Lập Phiếu";
+            const signatureDataUrl = localStorage.getItem("adminSignatureData");
+            const signatureImageHTML = signatureDataUrl ? `<img src="${signatureDataUrl}" class="signature-img" />` : `<div style="height: 70px;"></div>`;
+
+            return `
+          <div class="print-header">
+            <h1>BẢNG THEO DÕI & THANH TOÁN TIỀN GIA SƯ</h1>
+            <p>Tháng ${m + 1} Năm ${y}</p>
+          </div>
+          <div class="print-info"><div><strong>Học sinh:</strong> ${student}</div><div><strong>Đơn giá:</strong> ${price.toLocaleString()} VNĐ / Buổi (2 giờ)</div></div>
+          ${gridHTML}
+          <div class="print-summary">
+            <table><tr><td>Tổng số buổi đã dạy:</td><td>${count} buổi</td></tr><tr><td>Tổng thành tiền:</td><td style="color: #ef4444; font-size: 22px;">${totalMoney.toLocaleString()} VNĐ</td></tr></table>
+          </div>
+          <div class="print-footer">
+            <div><strong style="font-size: 18px;">Xác nhận của Phụ Huynh</strong><br><em style="font-size: 14px;">(Ký, ghi rõ họ tên)</em></div>
+            <div><em>${todayStr}</em><br><strong style="font-size: 18px;">${adminRole}</strong><br>${signatureImageHTML}<div style="font-weight: bold; font-size: 20px;">${adminName}</div></div>
+          </div>
+        `;
+        }
+
+        function downloadImage() {
+            const htmlContent = generateInvoiceHTML();
+            if (!htmlContent) return;
+
+            const printDiv = document.getElementById("printArea");
+            printDiv.innerHTML = htmlContent;
+            printDiv.classList.add('capture-mode');
+
+            setTimeout(() => {
+                html2canvas(printDiv, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+                    const link = document.createElement('a');
+                    const stu = studentSelect.value;
+                    const m = +monthSelect.value + 1;
+                    link.download = `HoaDon_${stu}_T${m}_${yearSelect.value}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+
+                    printDiv.classList.remove('capture-mode');
+                    printDiv.innerHTML = "";
+                });
+            }, 300);
+        }
+
+        function printInvoice() {
+            const htmlContent = generateInvoiceHTML();
+            if (!htmlContent) return;
+
+            document.getElementById("printArea").innerHTML = htmlContent;
+            setTimeout(() => { window.print(); }, 300);
+        }
+    </script>
+</body>
+</html>
