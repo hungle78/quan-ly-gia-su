@@ -403,6 +403,8 @@
       </div>
     </div>`;
   }
+  function downloadImage(){ let h=getInvHTML(); if(!h)return; let p=document.getElementById("printArea"); p.innerHTML=h; p.classList.add('capture-mode'); setTimeout(()=>{ html2canvas(p,{scale:2}).then(c=>{ let l=document.createElement('a'); l.download=`HoaDon_${studentSelect.value}_T${+monthSelect.value+1}.png`; l.href=c.toDataURL(); l.click(); p.classList.remove('capture-mode'); p.innerHTML=""; }); },300); }
+  function printInvoice(){ let h=getInvHTML(); if(!h)return; document.getElementById("printArea").innerHTML=h; setTimeout(()=>window.print(),300); }
 </script>
 </body>
 </html>
