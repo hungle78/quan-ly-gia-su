@@ -320,16 +320,16 @@
     }
     let today = new Date(), sig = localStorage.getItem("adminSig");
     return `
-      <div style="text-align:center;margin-bottom:20px;"><h2>BẢNG THEO DÕI GIA SƯ</h2><p>Tháng ${m+1} Năm ${y}</p></div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:15px;"><div><strong>Học sinh:</strong> ${s}</div><div><strong>Đơn giá:</strong> ${p?p.toLocaleString():"0"} VNĐ/Buổi</div></div>
-      <table class="print-table-grid"><tr><th>CN</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th></tr>${trs}</table>
-      <div style="text-align:right;font-size:16px;margin-bottom:25px;"><strong>Tổng: ${c} buổi = <span style="color:#ef4444">${tm.toLocaleString()} VNĐ</span></strong></div>
-      <div style="display:flex;justify-content:space-around;text-align:center;line-height:1.5;">
-        <div><strong>Phụ Huynh Ký</strong></div>
-        <div><em>Ngày ${today.getDate()} tháng ${today.getMonth()+1} năm ${today.getFullYear()}</em><br><strong>${localStorage.getItem("adminRole")||"Người Lập Phiếu"}</strong><br>${sig?`<img src="${sig}" height="80"/>`:'<div style="height:80px"></div>'}<br><b>${localStorage.getItem("adminName")||"Hưng"}</b></div>
-      </div>
-      <div style="text-align:right;margin-top:35px;font-size:11px;font-weight:800;color:#cbd5e1;letter-spacing:2px;border-top:1px dashed #e2e8f0;padding-top:12px;">POWERED BY HUNG LE</div>`;
-  }
+      return `
+    <div style="text-align:center;margin-bottom:20px;"><h2>BẢNG THEO DÕI GIA SƯ</h2><p>Tháng ${m+1} Năm ${y}</p></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:15px;"><div><strong>Học sinh:</strong> ${s}</div><div><strong>Đơn giá:</strong> ${p?p.toLocaleString():"0"} VNĐ/Buổi</div></div>
+    <table class="print-table-grid"><tr><th>CN</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th></tr>${trs}</table>
+    <div style="text-align:right;font-size:16px;margin-bottom:25px;"><strong>Tổng: ${c} buổi = <span style="color:#ef4444">${tm.toLocaleString()} VNĐ</span></strong></div>
+    <div style="display:flex;justify-content:space-around;text-align:center;line-height:1.5;margin-top:20px;">
+      <div><strong style="font-size: 18px;">Xác nhận của Phụ Huynh</strong><br><em style="font-size: 14px;">(Ký, ghi rõ họ tên)</em></div>
+      <div><em>Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth()+1).padStart(2, '0')} năm ${today.getFullYear()}</em><br><strong style="font-size: 18px;">${localStorage.getItem("adminRole")||"Người lập phiếu"}</strong><br>${sig?`<img src="${sig}" height="80" style="object-fit:contain; margin-top:5px;"/>`:'<div style="height:80px"></div>'}<br><b style="font-size: 20px;">${localStorage.getItem("adminName")||"Lê Bá Vĩnh Hưng"}</b></div>
+    </div>
+    <div style="text-align:right;margin-top:35px;font-size:11px;font-weight:800;color:#cbd5e1;letter-spacing:2px;border-top:1px dashed #e2e8f0;padding-top:12px;">POWERED BY HUNG LE</div>`;
   function downloadImage(){ let h=getInvHTML(); if(!h)return; let p=document.getElementById("printArea"); p.innerHTML=h; p.classList.add('capture-mode'); setTimeout(()=>{ html2canvas(p,{scale:2}).then(c=>{ let l=document.createElement('a'); l.download=`HoaDon_${studentSelect.value}_T${+monthSelect.value+1}.png`; l.href=c.toDataURL(); l.click(); p.classList.remove('capture-mode'); p.innerHTML=""; }); },300); }
   function printInvoice(){ let h=getInvHTML(); if(!h)return; document.getElementById("printArea").innerHTML=h; setTimeout(()=>window.print(),300); }
 </script>
