@@ -292,10 +292,11 @@
   }
 
   const canvas=document.getElementById('signaturePad'), ctx=canvas.getContext('2d'); let isD=false, isB=true;
-  function getPos(e){ let r=canvas.getBoundingClientRect(); return e.touches ? {x:(e.touches[0].clientX-r.left)*(canvas.width/r.width), y:(e.touches[0].clientY-r.top)*(canvas.height/r.height)} : {x:(e.clientX-r.left)*(canvas.width/r.width), y:(e.clientY-r.top)*(canvas.height/r.height)}; }
-  canvas.onmousedown=canvas.ontouchstart=(e)=>{ isD=true; isB=false; let p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); if(e.type==='touchstart') e.preventDefault(); };
-  canvas.onmousemove=canvas.ontouchmove=(e)=>{ if(!isD)return; let p=getPos(e); ctx.lineTo(p.x,p.y); ctx.strokeStyle='#1e3a8a'; ctx.lineWidth=3; ctx.stroke(); if(e.type==='touchmove') e.preventDefault(); };
-  canvas.onmouseup=canvas.onmouseout=canvas.ontouchend=()=>{ isD=false; };
+  ctx.lineCap='round'; ctx.lineJoin='round'; // Bo tròn nét bút để không bị răng cưa
+  function getPos(e){ let r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*(canvas.width/r.width), y:(e.clientY-r.top)*(canvas.height/r.height)}; }
+  canvas.onpointerdown=(e)=>{ isD=true; isB=false; let p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); canvas.setPointerCapture(e.pointerId); e.preventDefault(); };
+  canvas.onpointermove=(e)=>{ if(!isD)return; let p=getPos(e); ctx.lineTo(p.x,p.y); ctx.strokeStyle='#1e3a8a'; ctx.lineWidth=3.5; ctx.stroke(); e.preventDefault(); };
+  canvas.onpointerup=canvas.onpointercancel=()=>{ isD=false; };
   function clearSignature(){ ctx.clearRect(0,0,canvas.width,canvas.height); isB=true; }
   document.addEventListener("keydown", e => { if(e.ctrlKey&&e.key.toLowerCase()==='q'){ e.preventDefault(); document.getElementById('signatureModal').style.display='flex'; document.getElementById('adminNameInput').value=localStorage.getItem("adminName")||"Hưng"; document.getElementById('adminRoleInput').value=localStorage.getItem("adminRole")||"Người Lập Phiếu"; let s=localStorage.getItem("adminSig"); if(s){ isB=false; let i=new Image(); i.onload=()=>ctx.drawImage(i,0,0); i.src=s; }else clearSignature(); } });
   function closeSignatureModal(){ document.getElementById('signatureModal').style.display='none'; }
