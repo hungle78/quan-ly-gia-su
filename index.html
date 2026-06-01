@@ -306,34 +306,103 @@
     let s = studentSelect.value; if(!s) return null;
     let y = +yearSelect.value, m = +monthSelect.value, p = +priceInput.value||0, c = 0, tm = 0;
     let fD = new Date(y,m,1).getDay(), lD = new Date(y,m+1,0).getDate(), d = 1, trs = "";
+    
+    // 1. Dựng lịch các ngày trong tháng
     for(let i=0; i<6 && d<=lD; i++){
       trs += "<tr>";
       for(let j=0; j<7; j++){
-        if(i===0 && j<fD || d>lD) trs += "<td></td>";
-        else {
+        if(i===0 && j<fD || d>lD) {
+          trs += `<td style="border:1px solid #cbd5e1; height:80px; background:#fafaf9;"></td>`;
+        } else {
           let isC = localStorage.getItem(`${s}_${y}_${m}_${d}`)==="true", nt = localStorage.getItem(`${s}_${y}_${m}_${d}_note`)||"";
-          if(isC){ c++; let match = nt.match(/#(\d+(\.\d+)?)h/i); tm += match ? p*(parseFloat(match[1])/2) : p; }
-          trs += `<td><div style="display:flex;flex-direction:column;height:100%;"><div style="font-weight:bold;font-size:13px;color:#475569;">${d}</div>${isC?'<div style="flex-grow:1;display:flex;align-items:center;justify-content:center;font-size:26px;color:#10b981;">✔️</div>':''}${nt?`<div style="background:#f1f5f9;border-radius:4px;padding:3px;font-size:11px;text-align:center;margin-top:auto;">${nt}</div>`:''}</div></td>`;
+          let noteHTML = "";
+          
+          if(isC){ 
+              c++; 
+              let match = nt.match(/#(\d+(\.\d+)?)h/i); 
+              tm += match ? p*(parseFloat(match[1])/2) : p; 
+          }
+          
+          if(nt) {
+              let cleanText = nt.replace(/#/g, '');
+              if(nt.match(/#(\d+(\.\d+)?)h/i)) {
+                  // Nền đỏ nhạt cho số giờ học
+                  noteHTML = `<div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:4px; padding:2px; font-size:12px; font-weight:bold; color:#ef4444; text-align:center; margin-top:auto;">${cleanText}</div>`;
+              } else {
+                  // Nền xám nhạt cho ghi chú thường
+                  noteHTML = `<div style="background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; padding:2px; font-size:11px; color:#475569; text-align:center; margin-top:auto;">${cleanText}</div>`;
+              }
+          }
+          
+          trs += `<td style="border:1px solid #cbd5e1; height:80px; vertical-align:top; padding:4px;">
+            <div style="display:flex; flex-direction:column; height:100%;">
+              <div style="font-weight:600; font-size:13px; color:#475569;">${d}</div>
+              ${isC ? `<div style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size:32px; color:#4f46e5; font-weight:bold;">✓</div>` : ''}
+              ${noteHTML}
+            </div>
+          </td>`;
           d++;
         }
       }
       trs += "</tr>";
     }
-   let today = new Date(), sig = localStorage.getItem("adminSig");
-    return `
-    <div style="text-align:center;margin-bottom:20px;"><h2>BẢNG THEO DÕI GIA SƯ</h2><p>Tháng ${m+1} Năm ${y}</p></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:15px;"><div><strong>Học sinh:</strong> ${s}</div><div><strong>Đơn giá:</strong> ${p?p.toLocaleString():"0"} VNĐ/Buổi</div></div>
-    <table class="print-table-grid"><tr><th>CN</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th></tr>${trs}</table>
-    <div style="text-align:right;font-size:16px;margin-bottom:25px;"><strong>Tổng: ${c} buổi = <span style="color:#ef4444">${tm.toLocaleString()} VNĐ</span></strong></div>
-    <div style="display:flex;justify-content:space-around;text-align:center;line-height:1.5;margin-top:20px;">
-      <div><strong style="font-size: 18px;">Xác nhận của Phụ Huynh</strong><br><em style="font-size: 14px;">(Ký, ghi rõ họ tên)</em></div>
-      <div><em>Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth()+1).padStart(2, '0')} năm ${today.getFullYear()}</em><br><strong style="font-size: 18px;">${localStorage.getItem("adminRole")||"Người lập phiếu"}</strong><br>${sig?`<img src="${sig}" height="80" style="object-fit:contain; margin-top:5px;"/>`:'<div style="height:80px"></div>'}<br><b style="font-size: 20px;">${localStorage.getItem("adminName")||"Lê Bá Vĩnh Hưng"}</b></div>
-    </div>
-    <div style="text-align:right;margin-top:35px;font-size:11px;font-weight:800;color:#cbd5e1;letter-spacing:2px;border-top:1px dashed #e2e8f0;padding-top:12px;">POWERED BY HUNG LE</div>`;
-  }
+    
+    // 2. Nối thêm 2 dòng Tổng kết trực tiếp vào đáy bảng (Dùng Colspan gộp cột)
+    trs += `
+      <tr>
+        <td colspan="3" style="border:1px solid #cbd5e1; padding:16px; font-size:15px; color:#334155;">Tổng số buổi đã dạy:</td>
+        <td colspan="4" style="border:1px solid #cbd5e1; padding:16px; text-align:right; font-weight:bold; font-size:15px; color:#111827;">${c} buổi</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="border:1px solid #cbd5e1; padding:16px; font-size:15px; color:#334155;">Tổng thành tiền:</td>
+        <td colspan="4" style="border:1px solid #cbd5e1; padding:16px; text-align:right; font-weight:bold; font-size:22px; color:#ef4444;">${tm.toLocaleString()} VNĐ</td>
+      </tr>
+    `;
 
-  function downloadImage(){ let h=getInvHTML(); if(!h)return; let p=document.getElementById("printArea"); p.innerHTML=h; p.classList.add('capture-mode'); setTimeout(()=>{ html2canvas(p,{scale:2}).then(c=>{ let l=document.createElement('a'); l.download=`HoaDon_${studentSelect.value}_T${+monthSelect.value+1}.png`; l.href=c.toDataURL(); l.click(); p.classList.remove('capture-mode'); p.innerHTML=""; }); },300); }
-  function printInvoice(){ let h=getInvHTML(); if(!h)return; document.getElementById("printArea").innerHTML=h; setTimeout(()=>window.print(),300); }
+    // 3. Render toàn bộ trang
+    let today = new Date(), sig = localStorage.getItem("adminSig");
+    return `
+    <div style="font-family:'Inter',sans-serif; background:#fff; padding:10px 20px; box-sizing:border-box; color:#111827;">
+      
+      <div style="text-align:center; margin-bottom:25px;">
+        <h2 style="font-size:22px; font-weight:800; color:#111827; margin:0 0 8px 0; text-transform:uppercase;">BẢNG THEO DÕI & THANH TOÁN TIỀN GIA SƯ</h2>
+        <p style="font-size:15px; color:#4b5563; margin:0;">Tháng ${m+1} Năm ${y}</p>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; font-weight:600;">
+        <div>Học sinh: ${s}</div>
+        <div>Đơn giá: ${p?p.toLocaleString():"0"} VNĐ / Buổi (2 giờ)</div>
+      </div>
+      
+      <table style="width:100%; border-collapse:collapse; table-layout:fixed; margin-bottom:30px;">
+        <thead>
+          <tr>
+            ${["CN","T2","T3","T4","T5","T6","T7"].map(day => `<th style="border:1px solid #cbd5e1; background:#f8fafc; padding:12px 4px; font-size:13px; color:#475569; text-align:center; font-weight:600;">${day}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${trs}
+        </tbody>
+      </table>
+      
+      <div style="display:flex; justify-content:space-around; text-align:center; line-height:1.6; margin-bottom:10px;">
+        <div>
+          <strong style="font-size:16px;">Xác nhận của Phụ Huynh</strong><br>
+          <em style="font-size:13px; color:#4b5563;">(Ký, ghi rõ họ tên)</em>
+        </div>
+        <div>
+          <em style="font-size:13px; color:#4b5563;">Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth()+1).padStart(2, '0')} năm ${today.getFullYear()}</em><br>
+          <strong style="font-size:16px;">${localStorage.getItem("adminRole")||"Người lập phiếu"}</strong><br>
+          ${sig?`<img src="${sig}" height="80" style="object-fit:contain; margin-top:5px;"/>`:'<div style="height:80px"></div>'}<br>
+          <b style="font-size:18px;">${localStorage.getItem("adminName")||"Lê Bá Vĩnh Hưng"}</b>
+        </div>
+      </div>
+      
+      <div style="text-align:right; font-size:11px; font-weight:800; color:#cbd5e1; letter-spacing:2px; border-top:1px dashed #e2e8f0; padding-top:12px; margin-top:20px;">
+        POWERED BY HUNG LE
+      </div>
+    </div>`;
+  }
 </script>
 </body>
 </html>
