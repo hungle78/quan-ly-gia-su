@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản Lý Gia Sư | HungLe</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="apple-touch-icon" href="7630510.png">
   <link rel="icon" type="image/png" href="7630510.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
@@ -406,5 +409,11 @@
   function downloadImage(){ let h=getInvHTML(); if(!h)return; let p=document.getElementById("printArea"); p.innerHTML=h; p.classList.add('capture-mode'); setTimeout(()=>{ html2canvas(p,{scale:2}).then(c=>{ let l=document.createElement('a'); l.download=`HoaDon_${studentSelect.value}_T${+monthSelect.value+1}.png`; l.href=c.toDataURL(); l.click(); p.classList.remove('capture-mode'); p.innerHTML=""; }); },300); }
   function printInvoice(){ let h=getInvHTML(); if(!h)return; document.getElementById("printArea").innerHTML=h; setTimeout(()=>window.print(),300); }
 </script>
+  // Kích hoạt App (Service Worker)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
 </body>
 </html>
