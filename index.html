@@ -30,8 +30,9 @@
     .toolbar-row:last-child { margin-bottom:0; }
     .input-group { display:flex; flex-direction:column; gap:6px; flex-grow:1; min-width:150px; }
     .input-group label { font-size:13px; font-weight:600; color:var(--text-muted); }
-    select, input[type=text], input[type=number] { padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--border); font-family:inherit; font-size:14px; background:#f9fafb; outline:none; }
-    select:focus, input:focus { border-color:var(--primary); background:#fff; box-shadow:0 0 0 3px var(--primary-light); }
+    select, input[type=text], input[type=number], textarea { padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--border); font-family:inherit; font-size:14px; background:#f9fafb; outline:none; }
+    select:focus, input:focus, textarea:focus { border-color:var(--primary); background:#fff; box-shadow:0 0 0 3px var(--primary-light); }
+    textarea { resize: vertical; min-height: 80px; }
     .btn-group { display:flex; gap:8px; }
     button { display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border:none; border-radius:var(--radius-md); font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; }
     .btn-primary { background:var(--primary); color:white; }
@@ -137,6 +138,10 @@
     </div>
   </div>
 
+  <div class="card">
+    <h3><span class="material-symbols-rounded">rate_review</span> Nhận xét tháng này</h3>
+    <textarea id="studentRemark" placeholder="Nhập đánh giá tình hình học tập, sự tiến bộ, hoặc lời khuyên cho học sinh trong tháng này..."></textarea>
+  </div>
   <div style="display:flex; gap:12px;">
     <button class="btn-success" style="flex:1;" onclick="downloadImage()"><span class="material-symbols-rounded">image</span> Tải Ảnh Hóa Đơn</button>
     <button class="btn-dark" style="flex:1;" onclick="printInvoice()"><span class="material-symbols-rounded">print</span> In Bảng Giấy</button>
@@ -178,6 +183,7 @@
   let currentUser = null, syncTimeout = null;
 
   const studentSelect = document.getElementById("studentSelect"), priceInput = document.getElementById("priceInput"), yearSelect = document.getElementById("yearSelect"), monthSelect = document.getElementById("monthSelect");
+  const remarkInput = document.getElementById("studentRemark"); // Khai báo biến nhận xét
   const defaultStudents = ["Minh", "Lan"];
 
   for(let y=2024; y<=2030; y++) yearSelect.add(new Option(y, y));
@@ -261,13 +267,18 @@
       }
       table += `</tr>`;
     }
-    document.getElementById("calendarContainer").innerHTML = table + `</table>`; countSelected();
+    document.getElementById("calendarContainer").innerHTML = table + `</table>`; 
+    
+    // Tải dữ liệu Nhận Xét
+    remarkInput.value = localStorage.getItem(`${student}_${year}_${month}_remark`) || "";
+    
+    countSelected();
   }
 
   window.toggleDate = (k) => { localStorage.setItem(k, localStorage.getItem(k)==="true"?"false":"true"); countSelected(); triggerSync(); };
   window.editNote = (nK) => { let txt = prompt("Ghi chú (VD: #2h):", localStorage.getItem(nK)||""); if(txt!==null){ localStorage.setItem(nK,txt); reloadCalendar(); triggerSync(); } };
   
-  function clearCheckboxes() { if(confirm("Xoá lịch tháng này?")){ for(let d=1; d<=31; d++){ localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}`); localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}_note`); } reloadCalendar(); triggerSync(); } }
+  function clearCheckboxes() { if(confirm("Xoá lịch tháng này?")){ for(let d=1; d<=31; d++){ localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}`); localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}_note`); } localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_remark`); reloadCalendar(); triggerSync(); } }
   
   function countSelected() {
     let price = +priceInput.value||0, count=0, money=0;
@@ -283,6 +294,13 @@
   yearSelect.onchange = monthSelect.onchange = reloadCalendar;
   studentSelect.onchange = () => { priceInput.value = localStorage.getItem(studentSelect.value+"_price")||""; reloadCalendar(); };
   priceInput.onchange = () => { localStorage.setItem(studentSelect.value+"_price", priceInput.value); countSelected(); triggerSync(); };
+  
+  // Xử lý lưu Nhận xét khi người dùng gõ chữ
+  remarkInput.oninput = function() {
+    if(!studentSelect.value) return;
+    localStorage.setItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_remark`, this.value);
+    triggerSync();
+  };
 
   function toggleGlobalSummary() { let el = document.getElementById("globalSummary"); el.style.display = el.style.display==="none"?"block":"none"; if(el.style.display==="block") updateGlobalSummary(); }
   function updateGlobalSummary() {
@@ -350,7 +368,7 @@
       trs += "</tr>";
     }
     
-    // 2. Nối thêm 2 dòng Tổng kết trực tiếp vào đáy bảng (Dùng Colspan gộp cột)
+    // 2. Nối thêm 2 dòng Tổng kết trực tiếp vào đáy bảng
     trs += `
       <tr>
         <td colspan="3" style="border:1px solid #cbd5e1; padding:16px; font-size:15px; color:#334155;">Tổng số buổi đã dạy:</td>
@@ -361,6 +379,17 @@
         <td colspan="4" style="border:1px solid #cbd5e1; padding:16px; text-align:right; font-weight:bold; font-size:22px; color:#ef4444;">${tm.toLocaleString()} VNĐ</td>
       </tr>
     `;
+
+    // Khởi tạo HTML cho khung Nhận Xét
+    let studentRemark = localStorage.getItem(`${s}_${y}_${m}_remark`) || "";
+    let remarkHTMLBlock = "";
+    if (studentRemark.trim() !== "") {
+      remarkHTMLBlock = `
+      <div style="margin-bottom: 20px; padding: 12px; border: 1px dashed #cbd5e1; background: #f8fafc; border-radius: 8px;">
+        <strong style="font-size: 14px; color: #1e293b;">Nhận xét của gia sư:</strong>
+        <p style="font-size: 14px; color: #334155; margin: 8px 0 0 0; white-space: pre-wrap; line-height: 1.5;">${studentRemark.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+      </div>`;
+    }
 
     // 3. Render toàn bộ trang
     let today = new Date(), sig = localStorage.getItem("adminSig");
@@ -377,7 +406,7 @@
         <div>Đơn giá: ${p?p.toLocaleString():"0"} VNĐ / Buổi (2 giờ)</div>
       </div>
       
-      <table style="width:100%; border-collapse:collapse; table-layout:fixed; margin-bottom:30px;">
+      <table style="width:100%; border-collapse:collapse; table-layout:fixed; margin-bottom:20px;">
         <thead>
           <tr>
             ${["CN","T2","T3","T4","T5","T6","T7"].map(day => `<th style="border:1px solid #cbd5e1; background:#f8fafc; padding:12px 4px; font-size:13px; color:#475569; text-align:center; font-weight:600;">${day}</th>`).join('')}
@@ -387,6 +416,8 @@
           ${trs}
         </tbody>
       </table>
+      
+      ${remarkHTMLBlock}
       
       <div style="display:flex; justify-content:space-around; text-align:center; line-height:1.6; margin-bottom:10px;">
         <div>
