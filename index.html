@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <style>
     /* ================= DESIGN TOKENS ================= */
     :root {
@@ -254,6 +255,21 @@
       .hide-sm { display: none !important; }
     }
 
+    /* ===== Library (tài liệu chia sẻ) ===== */
+    .mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+    .mat-card { border: 1px solid var(--border); border-radius: 16px; padding: 14px; background: color-mix(in oklab, var(--primary) 4%, transparent); backdrop-filter: blur(6px); transition: transform .18s ease, box-shadow .18s ease; display: flex; flex-direction: column; gap: 8px; }
+    .mat-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px var(--primary-glow); }
+    .mat-top { display: flex; gap: 10px; align-items: flex-start; }
+    .mat-ico { color: var(--primary); font-size: 26px; }
+    .mat-title { font-weight: 800; font-size: 14px; line-height: 1.35; word-break: break-word; }
+    .mat-meta { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+    .mat-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .mat-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mat-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: color-mix(in oklab, var(--primary) 14%, transparent); color: var(--primary); }
+    .mat-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .mat-progress { display: none; height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 12px; }
+    .mat-progress > div { height: 100%; width: 0%; background: var(--grad-primary); transition: width .2s ease; }
+
     /* ===== Print (structure preserved — DO NOT ALTER) ===== */
     .print-area { display: none; background: #fff; color: #000; font-family: 'Inter', sans-serif; }
     .print-area.capture-mode { display: block !important; position: absolute; top: -99999px; left: -99999px; width: 860px; padding: 0; }
@@ -275,9 +291,7 @@
 <!-- LOGIN -->
 <div id="loginOverlay" class="modal-overlay">
   <div class="card" style="max-width:420px; text-align:center; width:90%;">
-    <div style="background:var(--grad-primary); width:70px; height:70px; border-radius:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; box-shadow:0 12px 30px var(--primary-glow);">
-      <span class="material-symbols-rounded" style="color:#fff; font-size:34px;">school</span>
-    </div>
+    <img src="/__l5e/assets-v1/0f7700d4-2fb3-4b9a-8b05-b7832c985720/logo.png" alt="Kẻ Nghiện Học" style="width:78px; height:78px; border-radius:22px; object-fit:cover; margin:0 auto 18px; display:block; box-shadow:0 12px 30px var(--primary-glow);" />
     <h2 style="justify-content:center; margin-bottom:10px; font-size:21px;">Quản Lý Gia Sư</h2>
     <p style="color:var(--text-muted); margin-bottom:24px; font-size:14px; line-height:1.65;">Đăng nhập để đồng bộ lịch dạy, hóa đơn và nhận xét lên đám mây.</p>
     <button class="btn-outline" onclick="loginWithGoogle()" style="width:100%; padding:13px; font-size:15px; border-radius:14px;">
@@ -298,6 +312,7 @@
     </div>
     <div class="btn-group">
       <button class="btn-outline icon-btn" onclick="openPalette()" title="Bảng lệnh (Ctrl + K)" aria-label="Bảng lệnh"><span class="material-symbols-rounded icon-sm">search</span></button>
+      <button class="btn-outline icon-btn" onclick="openLibrary()" title="Thư viện tài liệu (Ctrl + L)" aria-label="Thư viện tài liệu"><span class="material-symbols-rounded icon-sm">folder_shared</span></button>
       <button class="btn-outline icon-btn" onclick="toggleTheme()" title="Sáng / Tối (Ctrl + J)" aria-label="Đổi giao diện"><span class="material-symbols-rounded icon-sm" id="themeIcon">dark_mode</span></button>
       <button class="btn-outline" onclick="logout()" style="font-size:13px; padding:8px 14px;">
         <span class="material-symbols-rounded icon-sm">logout</span> <span class="hide-sm">Đăng xuất</span>
@@ -458,6 +473,72 @@
   <div class="modal-content">
     <input type="text" id="cmdInput" placeholder="Tìm lệnh hoặc học sinh..." oninput="renderPalette()" />
     <div class="cmd-list" id="cmdList"></div>
+  </div>
+</div>
+
+<!-- LIBRARY MODAL -->
+<div id="libraryModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:900px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="font-size:17px;"><span class="material-symbols-rounded" style="color:var(--primary);">folder_shared</span> Thư viện tài liệu chia sẻ <span id="matCount" style="font-size:12px; color:var(--text-muted); font-weight:600;"></span></h3>
+      <div class="btn-group">
+        <button class="btn-primary" onclick="toggleUploadPanel()"><span class="material-symbols-rounded icon-sm">upload</span> Chia sẻ tài liệu</button>
+        <button class="btn-outline icon-btn" onclick="closeLibrary()" aria-label="Đóng"><span class="material-symbols-rounded icon-sm">close</span></button>
+      </div>
+    </div>
+
+    <!-- UPLOAD PANEL -->
+    <div id="matUploadPanel" style="display:none; margin-top:14px; padding:16px; border:1px dashed var(--border); border-radius:16px;">
+      <div class="toolbar-row">
+        <div class="input-group"><label>Tiêu đề</label><input type="text" id="matTitle" placeholder="VD: Đề ôn tập Toán 9 - HK1" /></div>
+        <div class="input-group"><label>Môn học</label>
+          <select id="matSubjectIn">
+            <option>Toán</option><option>Lý</option><option>Hóa</option><option>Văn</option>
+            <option>Anh</option><option>Sinh</option><option>Khác</option>
+          </select>
+        </div>
+        <div class="input-group"><label>Lớp</label><input type="text" id="matGrade" placeholder="VD: 9" /></div>
+      </div>
+      <div class="toolbar-row">
+        <div class="input-group"><label>Mô tả ngắn</label><input type="text" id="matDesc" placeholder="Nội dung, mức độ, nguồn..." /></div>
+        <div class="input-group"><label>Thẻ (cách nhau bởi dấu phẩy)</label><input type="text" id="matTags" placeholder="đề thi, hình học" /></div>
+      </div>
+      <div class="toolbar-row">
+        <div class="input-group"><label>Tệp (PDF, ảnh, docx… tối đa 20MB)</label>
+          <div class="btn-group">
+            <button class="btn-outline" onclick="pickMatFile()"><span class="material-symbols-rounded icon-sm">attach_file</span> Chọn tệp</button>
+            <span id="matFileLabel" style="font-size:12px; color:var(--text-muted); align-self:center;">Chưa chọn tệp</span>
+            <input type="file" id="matFile" style="display:none;" onchange="onMatFile(this)" />
+          </div>
+        </div>
+        <div class="input-group"><label>Hoặc dán liên kết (Drive, YouTube…)</label><input type="text" id="matLink" placeholder="https://..." /></div>
+      </div>
+      <div id="matProgress" class="mat-progress"><div id="matProgressFill"></div></div>
+      <div class="btn-group" style="margin-top:14px; justify-content:flex-end;">
+        <button class="btn-outline" onclick="resetUploadForm()">Xoá form</button>
+        <button class="btn-success" onclick="submitMaterial()"><span class="material-symbols-rounded icon-sm">cloud_upload</span> Đăng lên thư viện</button>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="input-group" style="margin-top:14px;"><input type="text" id="matSearch" placeholder="Tìm theo tiêu đề, thẻ, người chia sẻ..." oninput="renderMaterials()" /></div>
+    <div class="review-tags" id="matTabs" style="margin-top:10px;">
+      <span class="review-tag active" onclick="setMatTab('all', this)">Tất cả</span>
+      <span class="review-tag" onclick="setMatTab('mine', this)">Của tôi</span>
+      <span class="review-tag" onclick="setMatTab('saved', this)">Đã lưu</span>
+    </div>
+    <div class="review-tags" id="matSubjects" style="margin-top:6px;">
+      <span class="review-tag active" onclick="setMatSubject('all', this)">Mọi môn</span>
+      <span class="review-tag" onclick="setMatSubject('Toán', this)">Toán</span>
+      <span class="review-tag" onclick="setMatSubject('Lý', this)">Lý</span>
+      <span class="review-tag" onclick="setMatSubject('Hóa', this)">Hóa</span>
+      <span class="review-tag" onclick="setMatSubject('Văn', this)">Văn</span>
+      <span class="review-tag" onclick="setMatSubject('Anh', this)">Anh</span>
+      <span class="review-tag" onclick="setMatSubject('Sinh', this)">Sinh</span>
+      <span class="review-tag" onclick="setMatSubject('Khác', this)">Khác</span>
+    </div>
+
+    <div class="mat-grid" id="matGrid" style="margin-top:14px;"></div>
   </div>
 </div>
 
@@ -1055,6 +1136,163 @@
     setTimeout(()=>window.print(), 300);
   }
 
+  /* ===== THƯ VIỆN TÀI LIỆU CHIA SẺ (Firestore 'materials' + Storage) ===== */
+  const MAT_MAX_MB = 20;
+  let matCache = [], matTab = 'all', matSubject = 'all', matSaved = [], matUnsub = null, matSelectedFile = null;
+
+  function openLibrary(){
+    if(!currentUser) return showToast('Cần đăng nhập để dùng thư viện', 'error');
+    document.getElementById('libraryModal').style.display = 'flex';
+    loadSavedList();
+    subscribeMaterials();
+  }
+  function closeLibrary(){
+    document.getElementById('libraryModal').style.display = 'none';
+    if(matUnsub){ matUnsub(); matUnsub = null; }
+  }
+  function subscribeMaterials(){
+    if(matUnsub) return;
+    document.getElementById('matGrid').innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Đang tải tài liệu...</p>';
+    matUnsub = db.collection('materials').orderBy('createdAt','desc').limit(120)
+      .onSnapshot(snap => {
+        matCache = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderMaterials();
+      }, err => {
+        document.getElementById('matGrid').innerHTML = '<p style="color:var(--danger); font-size:13px;">Không tải được thư viện: '+err.message+'</p>';
+      });
+  }
+  function loadSavedList(){
+    db.collection('user_library').doc(currentUser.uid).get()
+      .then(d => { matSaved = (d.exists && d.data().saved) || []; renderMaterials(); })
+      .catch(()=>{});
+  }
+  function setMatTab(t, el){
+    matTab = t;
+    document.querySelectorAll('#matTabs .review-tag').forEach(x=>x.classList.remove('active'));
+    if(el) el.classList.add('active');
+    renderMaterials();
+  }
+  function setMatSubject(v, el){
+    matSubject = v;
+    document.querySelectorAll('#matSubjects .review-tag').forEach(x=>x.classList.remove('active'));
+    if(el) el.classList.add('active');
+    renderMaterials();
+  }
+  function matEsc(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function matSize(b){ if(!b) return ''; return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.round(b/1024)+' KB'; }
+
+  function renderMaterials(){
+    const grid = document.getElementById('matGrid'); if(!grid) return;
+    const q = (document.getElementById('matSearch').value || '').trim().toLowerCase();
+    let list = matCache.filter(m => {
+      if(matTab === 'mine' && m.ownerUid !== currentUser.uid) return false;
+      if(matTab === 'saved' && !matSaved.includes(m.id)) return false;
+      if(matSubject !== 'all' && m.subject !== matSubject) return false;
+      if(q && !((m.title+' '+(m.desc||'')+' '+(m.tags||[]).join(' ')+' '+(m.ownerName||'')).toLowerCase().includes(q))) return false;
+      return true;
+    });
+    document.getElementById('matCount').innerText = list.length + ' tài liệu';
+    if(!list.length){ grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Chưa có tài liệu nào phù hợp. Hãy là người đầu tiên chia sẻ!</p>'; return; }
+    grid.innerHTML = list.map(m => {
+      const mine = m.ownerUid === currentUser.uid, saved = matSaved.includes(m.id);
+      return `<div class="mat-card">
+        <div class="mat-top">
+          <span class="material-symbols-rounded mat-ico">${m.type === 'link' ? 'link' : 'description'}</span>
+          <div style="flex:1; min-width:0;">
+            <p class="mat-title">${matEsc(m.title)}</p>
+            <p class="mat-meta">${matEsc(m.subject||'Khác')}${m.grade?' · Lớp '+matEsc(m.grade):''} · ${matEsc(m.ownerName||'Ẩn danh')}</p>
+          </div>
+        </div>
+        ${m.desc?`<p class="mat-desc">${matEsc(m.desc)}</p>`:''}
+        <div class="mat-tags">${(m.tags||[]).slice(0,4).map(t=>`<span class="mat-tag">#${matEsc(t)}</span>`).join('')}</div>
+        <div class="mat-foot">
+          <span class="mat-meta">${m.fileName?matEsc(m.fileName)+' · ':''}${matSize(m.size)}${m.downloads?' · '+m.downloads+' lượt mở':''}</span>
+          <div class="btn-group">
+            <button class="btn-outline icon-btn" title="${saved?'Bỏ lưu':'Lưu vào của tôi'}" onclick="toggleSaveMaterial('${m.id}')"><span class="material-symbols-rounded icon-sm" style="${saved?'color:var(--amber)':''}">${saved?'bookmark':'bookmark_border'}</span></button>
+            <button class="btn-primary" onclick="openMaterial('${m.id}')"><span class="material-symbols-rounded icon-sm">open_in_new</span> Mở</button>
+            ${mine?`<button class="btn-danger icon-btn" title="Xoá" onclick="deleteMaterial('${m.id}')"><span class="material-symbols-rounded icon-sm">delete</span></button>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function openMaterial(id){
+    const m = matCache.find(x=>x.id===id); if(!m) return;
+    window.open(m.url, '_blank', 'noopener');
+    db.collection('materials').doc(id).update({ downloads: firebase.firestore.FieldValue.increment(1) }).catch(()=>{});
+  }
+  function toggleSaveMaterial(id){
+    const on = matSaved.includes(id);
+    matSaved = on ? matSaved.filter(x=>x!==id) : [...matSaved, id];
+    renderMaterials(); haptic(14);
+    db.collection('user_library').doc(currentUser.uid).set({ saved: matSaved }, { merge:true })
+      .then(()=>showToast(on?'Đã bỏ lưu':'Đã lưu vào thư viện của bạn', on?'info':'success'))
+      .catch(e=>showToast('Lỗi: '+e.message, 'error'));
+  }
+  function deleteMaterial(id){
+    const m = matCache.find(x=>x.id===id); if(!m || m.ownerUid !== currentUser.uid) return;
+    if(!confirm('Xoá tài liệu "'+m.title+'"?')) return;
+    const done = ()=>{ db.collection('materials').doc(id).delete().then(()=>showToast('Đã xoá tài liệu','info')).catch(e=>showToast('Lỗi: '+e.message,'error')); };
+    if(m.storagePath) firebase.storage().ref(m.storagePath).delete().then(done).catch(done); else done();
+  }
+
+  function pickMatFile(){ document.getElementById('matFile').click(); }
+  function onMatFile(input){
+    const f = input.files && input.files[0]; matSelectedFile = f || null;
+    document.getElementById('matFileLabel').innerText = f ? f.name+' ('+matSize(f.size)+')' : 'Chưa chọn tệp';
+    if(f && !document.getElementById('matTitle').value) document.getElementById('matTitle').value = f.name.replace(/\.[^.]+$/,'');
+  }
+  function toggleUploadPanel(){
+    const p = document.getElementById('matUploadPanel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+  }
+  function submitMaterial(){
+    const title = document.getElementById('matTitle').value.trim();
+    const link  = document.getElementById('matLink').value.trim();
+    if(!title) return showToast('Nhập tiêu đề tài liệu', 'error');
+    if(!title || (!matSelectedFile && !link)) return showToast('Chọn tệp hoặc dán liên kết', 'error');
+    if(matSelectedFile && matSelectedFile.size > MAT_MAX_MB*1048576) return showToast('Tệp vượt quá '+MAT_MAX_MB+'MB', 'error');
+
+    const base = {
+      title,
+      subject: document.getElementById('matSubjectIn').value,
+      grade: document.getElementById('matGrade').value.trim(),
+      desc: document.getElementById('matDesc').value.trim(),
+      tags: document.getElementById('matTags').value.split(',').map(t=>t.trim()).filter(Boolean).slice(0,6),
+      ownerUid: currentUser.uid,
+      ownerName: currentUser.displayName || currentUser.email,
+      downloads: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const bar = document.getElementById('matProgress'), fill = document.getElementById('matProgressFill');
+
+    const finish = extra => db.collection('materials').add({ ...base, ...extra })
+      .then(()=>{ showToast('Đã chia sẻ tài liệu!', 'success'); confetti(18); resetUploadForm(); })
+      .catch(e=>showToast('Lỗi: '+e.message, 'error'))
+      .finally(()=>{ bar.style.display='none'; fill.style.width='0%'; });
+
+    if(matSelectedFile){
+      const path = 'materials/'+currentUser.uid+'/'+Date.now()+'_'+matSelectedFile.name.replace(/[^\w.\-]/g,'_');
+      const task = firebase.storage().ref(path).put(matSelectedFile);
+      bar.style.display='block';
+      task.on('state_changed', s=>{ fill.style.width = Math.round(s.bytesTransferred/s.totalBytes*100)+'%'; },
+        e=>{ bar.style.display='none'; showToast('Tải lên lỗi: '+e.message, 'error'); },
+        ()=> task.snapshot.ref.getDownloadURL().then(url => finish({
+          type:'file', url, storagePath:path, fileName:matSelectedFile.name, size:matSelectedFile.size
+        })));
+    } else {
+      finish({ type:'link', url: /^https?:\/\//.test(link) ? link : 'https://'+link });
+    }
+  }
+  function resetUploadForm(){
+    ['matTitle','matGrade','matDesc','matTags','matLink'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('matFile').value=''; matSelectedFile=null;
+    document.getElementById('matFileLabel').innerText='Chưa chọn tệp';
+    document.getElementById('matUploadPanel').style.display='none';
+  }
+
+
   /* ===== COMMAND PALETTE (Ctrl + K) ===== */
   let cmdIndex = 0;
   function baseCommands(){
@@ -1067,6 +1305,7 @@
       { icon:'chevron_left',    label:'Tháng trước',                 keys:'←',       run: ()=>shiftMonth(-1) },
       { icon:'chevron_right',   label:'Tháng sau',                   keys:'→',       run: ()=>shiftMonth(1) },
       { icon:'account_balance', label:'Thống kê doanh thu tất cả HS',keys:'',        run: toggleGlobalSummary },
+      { icon:'folder_shared',   label:'Thư viện tài liệu chia sẻ',    keys:'Ctrl L',  run: openLibrary },
       { icon:'mop',             label:'Làm mới lịch tháng này',      keys:'',        run: clearCheckboxes },
     ];
   }
@@ -1114,11 +1353,12 @@
       if(key === 'j'){ e.preventDefault(); toggleTheme(); return; }
       if(key === 's'){ e.preventDefault(); saveReview(); return; }
       if(key === 'd'){ e.preventDefault(); downloadImage(); return; }
+      if(key === 'l'){ e.preventDefault(); document.getElementById('libraryModal').style.display==='flex' ? closeLibrary() : openLibrary(); return; }
       return;
     }
 
     if(key === 'escape'){
-      closePalette(); closeNoteModal(); closeSignatureModal(); return;
+      closePalette(); closeNoteModal(); closeSignatureModal(); closeLibrary(); return;
     }
     const typing = ['input','textarea','select'].includes((e.target.tagName||'').toLowerCase());
     if(typing) return;
@@ -1129,7 +1369,7 @@
   /* Click nền để đóng modal */
   document.querySelectorAll('.modal-overlay').forEach(ov => {
     if(ov.id === 'loginOverlay') return;
-    ov.addEventListener('click', e => { if(e.target === ov) ov.style.display = 'none'; });
+    ov.addEventListener('click', e => { if(e.target !== ov) return; if(ov.id === 'libraryModal') closeLibrary(); else ov.style.display = 'none'; });
   });
 
   // Service Worker
