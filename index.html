@@ -270,6 +270,27 @@
     .mat-progress { display: none; height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 12px; }
     .mat-progress > div { height: 100%; width: 0%; background: var(--grad-primary); transition: width .2s ease; }
 
+    /* ===== Library drawer (bên cạnh) + cây thư mục ===== */
+    #libraryModal { align-items: stretch; justify-content: flex-end; padding: 0; }
+    #libraryModal .modal-content { max-width: 1020px; width: 100%; height: 100%; border-radius: 0; border-right: none; padding: 22px 22px 16px; display: flex; flex-direction: column; overflow: hidden; animation: drawerIn .4s var(--ease-spring); }
+    @keyframes drawerIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .lib-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 248px 1fr; gap: 16px; margin-top: 14px; }
+    .lib-tree { overflow-y: auto; padding-right: 6px; border-right: 1px solid var(--border); }
+    .lib-main { overflow-y: auto; padding-right: 4px; }
+    #libraryModal .mat-grid { max-height: none; }
+    .tree-node { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-muted); transition: background .16s ease, color .16s ease; user-select: none; }
+    .tree-node:hover { background: color-mix(in oklab, var(--primary) 9%, transparent); color: var(--text-main); }
+    .tree-node.active { background: color-mix(in oklab, var(--primary) 16%, transparent); color: var(--primary); }
+    .tree-node .material-symbols-rounded { font-size: 18px; }
+    .tree-node .tw-count { margin-left: auto; font-size: 11px; font-weight: 800; color: var(--text-muted); }
+    .tree-child { padding-left: 26px; font-size: 12.5px; }
+    .tree-sep { height: 1px; background: var(--border); margin: 8px 4px; }
+    @media (max-width: 900px) {
+      #libraryModal .modal-content { padding: 16px 14px; }
+      .lib-body { grid-template-columns: 1fr; }
+      .lib-tree { border-right: none; border-bottom: 1px solid var(--border); max-height: 30vh; }
+    }
+
     /* ===== Print (structure preserved — DO NOT ALTER) ===== */
     .print-area { display: none; background: #fff; color: #000; font-family: 'Inter', sans-serif; }
     .print-area.capture-mode { display: block !important; position: absolute; top: -99999px; left: -99999px; width: 860px; padding: 0; }
@@ -478,7 +499,7 @@
 
 <!-- LIBRARY MODAL -->
 <div id="libraryModal" class="modal-overlay">
-  <div class="modal-content" style="max-width:900px;">
+  <div class="modal-content">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <h3 style="font-size:17px;"><span class="material-symbols-rounded" style="color:var(--primary);">folder_shared</span> Thư viện tài liệu chia sẻ <span id="matCount" style="font-size:12px; color:var(--text-muted); font-weight:600;"></span></h3>
       <div class="btn-group">
@@ -497,7 +518,15 @@
             <option>Anh</option><option>Sinh</option><option>Khác</option>
           </select>
         </div>
-        <div class="input-group"><label>Lớp</label><input type="text" id="matGrade" placeholder="VD: 9" /></div>
+        <div class="input-group"><label>Lớp</label>
+          <select id="matGrade">
+            <option value="1">Lớp 1</option><option value="2">Lớp 2</option><option value="3">Lớp 3</option>
+            <option value="4">Lớp 4</option><option value="5">Lớp 5</option><option value="6">Lớp 6</option>
+            <option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9" selected>Lớp 9</option>
+            <option value="10">Lớp 10</option><option value="11">Lớp 11</option><option value="12">Lớp 12</option>
+            <option value="">Khác / Chung</option>
+          </select>
+        </div>
       </div>
       <div class="toolbar-row">
         <div class="input-group"><label>Mô tả ngắn</label><input type="text" id="matDesc" placeholder="Nội dung, mức độ, nguồn..." /></div>
@@ -520,25 +549,17 @@
       </div>
     </div>
 
-    <!-- FILTERS -->
+    <!-- SEARCH -->
     <div class="input-group" style="margin-top:14px;"><input type="text" id="matSearch" placeholder="Tìm theo tiêu đề, thẻ, người chia sẻ..." oninput="renderMaterials()" /></div>
-    <div class="review-tags" id="matTabs" style="margin-top:10px;">
-      <span class="review-tag active" onclick="setMatTab('all', this)">Tất cả</span>
-      <span class="review-tag" onclick="setMatTab('mine', this)">Của tôi</span>
-      <span class="review-tag" onclick="setMatTab('saved', this)">Đã lưu</span>
-    </div>
-    <div class="review-tags" id="matSubjects" style="margin-top:6px;">
-      <span class="review-tag active" onclick="setMatSubject('all', this)">Mọi môn</span>
-      <span class="review-tag" onclick="setMatSubject('Toán', this)">Toán</span>
-      <span class="review-tag" onclick="setMatSubject('Lý', this)">Lý</span>
-      <span class="review-tag" onclick="setMatSubject('Hóa', this)">Hóa</span>
-      <span class="review-tag" onclick="setMatSubject('Văn', this)">Văn</span>
-      <span class="review-tag" onclick="setMatSubject('Anh', this)">Anh</span>
-      <span class="review-tag" onclick="setMatSubject('Sinh', this)">Sinh</span>
-      <span class="review-tag" onclick="setMatSubject('Khác', this)">Khác</span>
-    </div>
 
-    <div class="mat-grid" id="matGrid" style="margin-top:14px;"></div>
+    <!-- TREE + GRID -->
+    <div class="lib-body">
+      <div class="lib-tree" id="matTree"></div>
+      <div class="lib-main">
+        <p id="matBreadcrumb" class="mat-meta" style="margin-bottom:10px;"></p>
+        <div class="mat-grid" id="matGrid"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1166,33 +1187,84 @@
       .then(d => { matSaved = (d.exists && d.data().saved) || []; renderMaterials(); })
       .catch(()=>{});
   }
-  function setMatTab(t, el){
-    matTab = t;
-    document.querySelectorAll('#matTabs .review-tag').forEach(x=>x.classList.remove('active'));
-    if(el) el.classList.add('active');
+  /* --- Cây thư mục: Lớp 1→12 › Môn (bài tự thêm khi có tài liệu) --- */
+  const MAT_GRADES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+  const MAT_SUBJECTS = ['Toán','Lý','Hóa','Văn','Anh','Sinh','Khác'];
+  let matGradeFilter = 'all', matOpenGrades = new Set();
+
+  function setMatTab(t){ matTab = t; renderMaterials(); }
+  function setMatSubject(v){ matSubject = v; renderMaterials(); }
+  function selectMatNode(grade, subject){
+    matGradeFilter = grade; matSubject = subject;
+    if(grade !== 'all') matOpenGrades.add(grade);
+    matTab = 'all'; haptic(8); renderMaterials();
+  }
+  function toggleMatGrade(g){
+    if(matOpenGrades.has(g)) matOpenGrades.delete(g); else matOpenGrades.add(g);
     renderMaterials();
   }
-  function setMatSubject(v, el){
-    matSubject = v;
-    document.querySelectorAll('#matSubjects .review-tag').forEach(x=>x.classList.remove('active'));
-    if(el) el.classList.add('active');
-    renderMaterials();
+  function matVisibleBase(){
+    return matCache.filter(m => {
+      if(matTab === 'mine' && m.ownerUid !== currentUser.uid) return false;
+      if(matTab === 'saved' && !matSaved.includes(m.id)) return false;
+      return true;
+    });
+  }
+  function matGradeOf(m){ const g = String(m.grade||'').trim(); return MAT_GRADES.includes(g) ? g : 'other'; }
+  function matSubjectOf(m){ return MAT_SUBJECTS.includes(m.subject) ? m.subject : 'Khác'; }
+
+  function renderMatTree(){
+    const box = document.getElementById('matTree'); if(!box) return;
+    const base = matVisibleBase();
+    const node = (label, icon, active, count, onclick, cls) =>
+      `<div class="tree-node ${cls||''} ${active?'active':''}" onclick="${onclick}">
+        <span class="material-symbols-rounded">${icon}</span><span>${matEsc(label)}</span>
+        ${count!=null?`<span class="tw-count">${count}</span>`:''}
+      </div>`;
+    let html = '';
+    html += node('Tất cả tài liệu','inbox', matTab==='all'&&matGradeFilter==='all'&&matSubject==='all', matCache.length, "selectMatNode('all','all')");
+    html += node('Của tôi','person', matTab==='mine', matCache.filter(m=>m.ownerUid===currentUser.uid).length, "setMatTab('mine')");
+    html += node('Đã lưu','bookmark', matTab==='saved', matSaved.length, "setMatTab('saved')");
+    html += '<div class="tree-sep"></div>';
+    const groups = [...MAT_GRADES, 'other'];
+    groups.forEach(g => {
+      const inG = base.filter(m => matGradeOf(m) === g);
+      const open = matOpenGrades.has(g);
+      const label = g === 'other' ? 'Khác / Chung' : 'Lớp ' + g;
+      html += node(label, open?'folder_open':'folder', matGradeFilter===g && matSubject==='all', inG.length, `toggleMatGrade('${g}');selectMatNode('${g}','all')`);
+      if(open){
+        MAT_SUBJECTS.forEach(s => {
+          const c = inG.filter(m => matSubjectOf(m) === s).length;
+          if(!c && matGradeFilter !== g) return;
+          html += node(s, 'description', matGradeFilter===g && matSubject===s, c, `selectMatNode('${g}','${s}')`, 'tree-child');
+        });
+      }
+    });
+    box.innerHTML = html;
+    const bc = document.getElementById('matBreadcrumb');
+    if(bc){
+      const parts = [];
+      if(matTab==='mine') parts.push('Của tôi'); else if(matTab==='saved') parts.push('Đã lưu'); else parts.push('Thư viện');
+      if(matGradeFilter!=='all') parts.push(matGradeFilter==='other'?'Khác / Chung':'Lớp '+matGradeFilter);
+      if(matSubject!=='all') parts.push(matSubject);
+      bc.innerText = parts.join('  ›  ');
+    }
   }
   function matEsc(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function matSize(b){ if(!b) return ''; return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.round(b/1024)+' KB'; }
 
   function renderMaterials(){
     const grid = document.getElementById('matGrid'); if(!grid) return;
+    renderMatTree();
     const q = (document.getElementById('matSearch').value || '').trim().toLowerCase();
-    let list = matCache.filter(m => {
-      if(matTab === 'mine' && m.ownerUid !== currentUser.uid) return false;
-      if(matTab === 'saved' && !matSaved.includes(m.id)) return false;
-      if(matSubject !== 'all' && m.subject !== matSubject) return false;
+    let list = matVisibleBase().filter(m => {
+      if(matGradeFilter !== 'all' && matGradeOf(m) !== matGradeFilter) return false;
+      if(matSubject !== 'all' && matSubjectOf(m) !== matSubject) return false;
       if(q && !((m.title+' '+(m.desc||'')+' '+(m.tags||[]).join(' ')+' '+(m.ownerName||'')).toLowerCase().includes(q))) return false;
       return true;
     });
     document.getElementById('matCount').innerText = list.length + ' tài liệu';
-    if(!list.length){ grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Chưa có tài liệu nào phù hợp. Hãy là người đầu tiên chia sẻ!</p>'; return; }
+    if(!list.length){ grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Thư mục này chưa có tài liệu. Nhấn “Chia sẻ tài liệu” để thêm bài mới.</p>'; return; }
     grid.innerHTML = list.map(m => {
       const mine = m.ownerUid === currentUser.uid, saved = matSaved.includes(m.id);
       return `<div class="mat-card">
