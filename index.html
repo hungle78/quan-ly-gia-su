@@ -291,6 +291,19 @@
       .lib-tree { border-right: none; border-bottom: 1px solid var(--border); max-height: 30vh; }
     }
 
+    /* ===== Side rail tab (Thư viện) ===== */
+    .side-rail { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 60; display: flex; flex-direction: column; gap: 10px; }
+    .rail-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px; border: 1px solid var(--border); border-right: none; border-radius: 16px 0 0 16px; background: color-mix(in oklab, var(--card) 82%, transparent); backdrop-filter: blur(16px); color: var(--text-main); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; letter-spacing: .04em; box-shadow: -6px 0 24px rgba(0,0,0,.16); transition: transform .22s var(--ease-spring), background .2s ease, color .2s ease; }
+    .rail-btn span.rail-label { writing-mode: vertical-rl; text-orientation: mixed; }
+    .rail-btn .material-symbols-rounded { font-size: 22px; color: var(--primary); }
+    .rail-btn:hover { transform: translateX(-4px); background: color-mix(in oklab, var(--primary) 14%, var(--card)); }
+    .rail-btn:active { transform: translateX(-1px) scale(.98); }
+    @media (max-width: 640px) {
+      .rail-btn { padding: 12px 8px; font-size: 11px; }
+      .rail-btn .material-symbols-rounded { font-size: 19px; }
+    }
+    @media print { .side-rail { display: none !important; } }
+
     /* ===== Print (structure preserved — DO NOT ALTER) ===== */
     .print-area { display: none; background: #fff; color: #000; font-family: 'Inter', sans-serif; }
     .print-area.capture-mode { display: block !important; position: absolute; top: -99999px; left: -99999px; width: 860px; padding: 0; }
@@ -333,7 +346,6 @@
     </div>
     <div class="btn-group">
       <button class="btn-outline icon-btn" onclick="openPalette()" title="Bảng lệnh (Ctrl + K)" aria-label="Bảng lệnh"><span class="material-symbols-rounded icon-sm">search</span></button>
-      <button class="btn-outline icon-btn" onclick="openLibrary()" title="Thư viện tài liệu (Ctrl + L)" aria-label="Thư viện tài liệu"><span class="material-symbols-rounded icon-sm">folder_shared</span></button>
       <button class="btn-outline icon-btn" onclick="toggleTheme()" title="Sáng / Tối (Ctrl + J)" aria-label="Đổi giao diện"><span class="material-symbols-rounded icon-sm" id="themeIcon">dark_mode</span></button>
       <button class="btn-outline" onclick="logout()" style="font-size:13px; padding:8px 14px;">
         <span class="material-symbols-rounded icon-sm">logout</span> <span class="hide-sm">Đăng xuất</span>
@@ -446,6 +458,15 @@
     </div>
   </div>
 </div>
+
+<!-- SIDE RAIL -->
+<div class="side-rail" id="sideRail" style="display:none;">
+  <button class="rail-btn" onclick="openLibrary()" title="Thư viện tài liệu (Ctrl + L)" aria-label="Thư viện tài liệu">
+    <span class="material-symbols-rounded">folder_shared</span>
+    <span class="rail-label">TÀI LIỆU</span>
+  </button>
+</div>
+
 
 <!-- SIGNATURE MODAL -->
 <div id="signatureModal" class="modal-overlay">
@@ -637,12 +658,14 @@
     if(user){
       currentUser = user;
       document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('sideRail').style.display = 'flex';
       document.getElementById('userEmail').innerText = user.email;
       document.getElementById('userAvatar').innerText = user.email[0].toUpperCase();
       loadFromFirebase(user.uid);
     } else {
       currentUser = null;
       document.getElementById('loginOverlay').style.display = 'flex';
+      document.getElementById('sideRail').style.display = 'none';
       const keepTheme = localStorage.getItem('uiTheme');
       localStorage.clear();
       if(keepTheme) localStorage.setItem('uiTheme', keepTheme);
