@@ -1,20 +1,22 @@
 {
-  "name": "Quản Lý Gia Sư",
+  "name": "Quản Lý Gia Sư | Kẻ Nghiện Học",
   "short_name": "Gia Sư",
-  "start_url": "./",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f3f4f6",
-  "theme_color": "#4f46e5",
+  "background_color": "#0a0d18",
+  "theme_color": "#5b5bd6",
   "icons": [
     {
-      "src": "7630510.png",
+      "src": "logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "7630510.png",
+      "src": "logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
