@@ -1325,11 +1325,17 @@
       .then(()=>showToast(on?'Đã bỏ lưu':'Đã lưu vào thư viện của bạn', on?'info':'success'))
       .catch(e=>showToast('Lỗi: '+e.message, 'error'));
   }
+  /* ===== CẤU HÌNH CLOUDINARY ===== */
+  const CLOUDINARY_CLOUD_NAME = "jsosbsfj";
+  const CLOUDINARY_UPLOAD_PRESET = "tutor_preset";
+
   function deleteMaterial(id){
-    const m = matCache.find(x=>x.id===id); if(!m || m.ownerUid !== currentUser.uid) return;
-    if(!confirm('Xoá tài liệu "'+m.title+'"?')) return;
-    const done = ()=>{ db.collection('materials').doc(id).delete().then(()=>showToast('Đã xoá tài liệu','info')).catch(e=>showToast('Lỗi: '+e.message,'error')); };
-    if(m.storagePath) firebase.storage().ref(m.storagePath).delete().then(done).catch(done); else done();
+    const m = matCache.find(x=>x.id===id); 
+    if(!m || m.ownerUid !== currentUser.uid) return;
+    if(!confirm('Xoá tài liệu "' + m.title + '"?')) return;
+    db.collection('materials').doc(id).delete()
+      .then(() => showToast('Đã xoá tài liệu', 'info'))
+      .catch(e => showToast('Lỗi: ' + e.message, 'error'));
   }
 
   function pickMatFile(){ document.getElementById('matFile').click(); }
@@ -1342,7 +1348,8 @@
     const p = document.getElementById('matUploadPanel');
     p.style.display = p.style.display === 'block' ? 'none' : 'block';
   }
-  function submitMaterial(){
+
+  async function submitMaterial(){
     const title = document.getElementById('matTitle').value.trim();
     const link  = document.getElementById('matLink').value.trim();
     if(!title) return showToast('Nhập tiêu đề tài liệu', 'error');
@@ -1360,25 +1367,76 @@
       downloads: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+
     const bar = document.getElementById('matProgress'), fill = document.getElementById('matProgressFill');
 
-    const finish = extra => db.collection('materials').add({ ...base, ...extra })
-      .then(()=>{ showToast('Đã chia sẻ tài liệu!', 'success'); confetti(18); resetUploadForm(); })
-      .catch(e=>showToast('Lỗi: '+e.message, 'error'))
-      .finally(()=>{ bar.style.display='none'; fill.style.width='0%'; });
-
-    if(matSelectedFile){
-      const path = 'materials/'+currentUser.uid+'/'+Date.now()+'_'+matSelectedFile.name.replace(/[^\w.\-]/g,'_');
-      const task = firebase.storage().ref(path).put(matSelectedFile);
-      bar.style.display='block';
-      task.on('state_changed', s=>{ fill.style.width = Math.round(s.bytesTransferred/s.totalBytes*100)+'%'; },
-        e=>{ bar.style.display='none'; showToast('Tải lên lỗi: '+e.message, 'error'); },
-        ()=> task.snapshot.ref.getDownloadURL().then(url => finish({
-          type:'file', url, storagePath:path, fileName:matSelectedFile.name, size:matSelectedFile.size
-        })));
-    } else {
-      finish({ type:'link', url: /^https?:\/\//.test(link) ? link : 'https://'+link });
+    // Trường hợp 1: Dán liên kết trực tiếp
+    if(!matSelectedFile && link){
+      try {
+        await db.collection('materials').add({
+          ...base,
+          type: 'link',
+          url: /^https?:\/\//.test(link) ? link : 'https://' + link
+        });
+        showToast('Đã chia sẻ tài liệu!', 'success');
+        confetti(18);
+        resetUploadForm();
+      } catch(e) {
+        showToast('Lỗi: ' + e.message, 'error');
+      }
+      return;
     }
+
+    // Trường hợp 2: Tải tệp lên Cloudinary bằng REST API
+    bar.style.display = 'block';
+    fill.style.width = '10%';
+
+    const formData = new FormData();
+    formData.append('file', matSelectedFile);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        fill.style.width = percent + '%';
+      }
+    };
+
+    xhr.onload = async () => {
+      bar.style.display = 'none';
+      fill.style.width = '0%';
+      if (xhr.status === 200) {
+        const res = JSON.parse(xhr.responseText);
+        try {
+          await db.collection('materials').add({
+            ...base,
+            type: 'file',
+            url: res.secure_url,
+            fileName: matSelectedFile.name,
+            size: matSelectedFile.size
+          });
+          showToast('Đã tải lên Cloudinary thành công!', 'success');
+          confetti(18);
+          resetUploadForm();
+        } catch(e) {
+          showToast('Lỗi lưu dữ liệu: ' + e.message, 'error');
+        }
+      } else {
+        const errRes = JSON.parse(xhr.responseText || '{}');
+        showToast('Upload thất bại: ' + (errRes.error?.message || 'Lỗi kết nối'), 'error');
+      }
+    };
+
+    xhr.onerror = () => {
+      bar.style.display = 'none';
+      fill.style.width = '0%';
+      showToast('Lỗi kết nối mạng khi tải tệp lên Cloudinary', 'error');
+    };
+
+    xhr.send(formData);
   }
   function resetUploadForm(){
     ['matTitle','matGrade','matDesc','matTags','matLink'].forEach(id=>document.getElementById(id).value='');
