@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản Lý Gia Sư | HungLe</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#5b5bd6">
   <link rel="apple-touch-icon" href="7630510.png">
   <link rel="icon" type="image/png" href="7630510.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,36 +15,59 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
+    /* ================= DESIGN TOKENS ================= */
     :root {
-      --primary: #4f46e5; --primary-hover: #4338ca; --primary-light: #e0e7ff;
-      --danger: #ef4444; --danger-light: #fee2e2; --success: #10b981;
+      --primary: #5b5bd6; --primary-hover: #4747c4; --primary-light: #e6e6fb;
+      --primary-glow: rgba(91,91,214,0.45);
+      --danger: #ef4444; --danger-light: #fee2e2; --success: #0fb47f;
       --amber: #f59e0b; --amber-light: #fef3c7;
-      --bg-body: #f4f6fb; --bg-surface: #ffffff;
-      --text-main: #111827; --text-muted: #6b7280;
-      --border: #e5e7eb; --radius-md: 10px; --radius-lg: 18px;
-      --shadow-sm: 0 1px 2px rgba(15,23,42,0.05), 0 2px 8px rgba(15,23,42,0.04);
-      --shadow-md: 0 6px 20px rgba(15,23,42,0.08);
-      --shadow-lg: 0 12px 36px rgba(15,23,42,0.12);
+      --bg-body: #f2f4fa; --bg-surface: #ffffff; --bg-elev: #ffffff;
+      --glass: rgba(255,255,255,0.72); --glass-border: rgba(255,255,255,0.65);
+      --text-main: #0f172a; --text-muted: #64748b;
+      --border: #e6e9f2; --field: #f7f8fc;
+      --radius-md: 12px; --radius-lg: 20px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,0.04), 0 4px 14px rgba(15,23,42,0.05);
+      --shadow-md: 0 8px 28px rgba(15,23,42,0.09);
+      --shadow-lg: 0 20px 50px rgba(15,23,42,0.16);
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --grad-primary: linear-gradient(135deg, #5b5bd6, #8b5cf6 55%, #6366f1);
+      --grad-success: linear-gradient(135deg, #0fb47f, #059669);
+    }
+    html[data-theme="dark"] {
+      --primary: #8b8bf5; --primary-hover: #a5a5ff; --primary-light: rgba(139,139,245,0.18);
+      --primary-glow: rgba(139,139,245,0.4);
+      --danger-light: rgba(239,68,68,0.16); --amber-light: rgba(245,158,11,0.16);
+      --bg-body: #0a0d18; --bg-surface: #131829; --bg-elev: #171d31;
+      --glass: rgba(21,26,44,0.72); --glass-border: rgba(255,255,255,0.08);
+      --text-main: #e9edf7; --text-muted: #93a0bd;
+      --border: rgba(255,255,255,0.09); --field: rgba(255,255,255,0.04);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.32);
+      --shadow-md: 0 10px 34px rgba(0,0,0,0.45);
+      --shadow-lg: 0 26px 60px rgba(0,0,0,0.55);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
       background:
-        radial-gradient(1100px 500px at 85% -10%, rgba(79,70,229,0.07), transparent 60%),
-        radial-gradient(900px 420px at -10% 15%, rgba(16,185,129,0.06), transparent 55%),
+        radial-gradient(1100px 520px at 88% -12%, var(--primary-glow), transparent 62%),
+        radial-gradient(900px 460px at -12% 12%, rgba(15,180,127,0.16), transparent 58%),
+        radial-gradient(700px 400px at 50% 110%, rgba(245,158,11,0.10), transparent 60%),
         var(--bg-body);
+      background-attachment: fixed;
       color: var(--text-main); padding: 24px 16px; display: flex; justify-content: center; min-height: 100vh;
+      transition: background-color .4s var(--ease-out), color .3s var(--ease-out);
     }
-    ::selection { background: var(--primary-light); color: var(--primary); }
-    .watermark-ui { position: fixed; bottom: 12px; right: 16px; font-size: 11px; font-weight: 800; color: #94a3b8; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase; pointer-events: none; z-index: 999; }
-    .container { width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px; }
+    ::selection { background: var(--primary); color: #fff; }
+    ::-webkit-scrollbar { height: 10px; width: 10px; }
+    ::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--text-muted) 35%, transparent); border-radius: 99px; }
+    .watermark-ui { position: fixed; bottom: 12px; right: 16px; font-size: 11px; font-weight: 800; color: var(--text-muted); opacity: 0.35; letter-spacing: 2px; text-transform: uppercase; pointer-events: none; z-index: 999; }
+    .container { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; padding-bottom: 56px; }
 
     /* ===== Entrance animation (staggered) ===== */
-    @keyframes riseIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    .container > * { animation: riseIn 0.55s var(--ease-out) backwards; }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(18px) scale(.99); } to { opacity: 1; transform: none; } }
+    .container > * { animation: riseIn 0.6s var(--ease-out) backwards; }
     .container > *:nth-child(1) { animation-delay: 0.03s; }
     .container > *:nth-child(2) { animation-delay: 0.09s; }
     .container > *:nth-child(3) { animation-delay: 0.15s; }
@@ -52,130 +75,166 @@
     .container > *:nth-child(5) { animation-delay: 0.27s; }
     .container > *:nth-child(6) { animation-delay: 0.33s; }
     .container > *:nth-child(7) { animation-delay: 0.39s; }
+    .container > *:nth-child(8) { animation-delay: 0.45s; }
+    .container > *:nth-child(9) { animation-delay: 0.51s; }
 
-    h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--primary); letter-spacing: -0.3px; }
+    h2 { font-size: 21px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;
+         background: var(--grad-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    h2 .material-symbols-rounded { color: var(--primary); -webkit-text-fill-color: var(--primary); }
     h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-    .card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out); }
-    .card:hover { box-shadow: var(--shadow-md); }
-    .user-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 12px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); position: sticky; top: 12px; z-index: 100; }
+
+    .card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: box-shadow .35s var(--ease-out), transform .35s var(--ease-out), border-color .3s; position: relative; }
+    .card:hover { box-shadow: var(--shadow-md); border-color: color-mix(in oklab, var(--primary) 22%, var(--border)); }
+
+    .user-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--glass); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); padding: 11px 16px; border-radius: 999px; border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm); position: sticky; top: 12px; z-index: 100; }
     .user-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; min-width: 0; }
     .user-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .user-avatar { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7c6ff0); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; box-shadow: 0 3px 8px rgba(79,70,229,0.35); }
+    .user-avatar { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--grad-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; box-shadow: 0 4px 14px var(--primary-glow); }
+
     .toolbar-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 14px; }
     .toolbar-row:last-child { margin-bottom: 0; }
-    .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 150px; }
-    .input-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    select, input[type=text], input[type=number], textarea { padding: 11px 13px; border-radius: var(--radius-md); border: 1.5px solid var(--border); font-family: inherit; font-size: 14px; background: #f9fafb; outline: none; transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out), background 0.2s; }
-    select:hover, input:hover, textarea:hover { border-color: #c7cbe0; }
-    select:focus, input:focus, textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(79,70,229,0.13); }
-    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 150px; }
+    .input-group label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    select, input[type=text], input[type=number], textarea { padding: 11px 13px; border-radius: var(--radius-md); border: 1.5px solid var(--border); font-family: inherit; font-size: 14px; background: var(--field); color: var(--text-main); outline: none; transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out), background .2s; }
+    select:hover, input:hover, textarea:hover { border-color: color-mix(in oklab, var(--primary) 45%, var(--border)); }
+    select:focus, input:focus, textarea:focus { border-color: var(--primary); background: var(--bg-elev); box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 22%, transparent); }
+    textarea { resize: vertical; min-height: 84px; line-height: 1.65; }
     .btn-group { display: flex; gap: 8px; }
-    button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-out), background 0.18s, filter 0.18s; will-change: transform; }
-    button:hover { transform: translateY(-2px); filter: brightness(1.04); }
-    button:active { transform: translateY(0) scale(0.97); transition-duration: 0.06s; }
-    .btn-primary { background: var(--primary); color: white; box-shadow: 0 3px 10px rgba(79,70,229,0.3); }
-    .btn-primary:hover { box-shadow: 0 6px 18px rgba(79,70,229,0.38); }
-    .btn-success { background: var(--success); color: white; box-shadow: 0 3px 10px rgba(16,185,129,0.3); }
-    .btn-success:hover { box-shadow: 0 6px 18px rgba(16,185,129,0.38); }
+
+    button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border: none; border-radius: var(--radius-md); font-weight: 650; font-size: 14px; cursor: pointer; font-family: inherit; position: relative; overflow: hidden; transition: transform .18s var(--ease-spring), box-shadow .18s var(--ease-out), background .18s, filter .18s, color .18s; will-change: transform; }
+    button:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    button:active { transform: translateY(0) scale(0.96); transition-duration: 0.06s; }
+    button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+    .ripple { position: absolute; border-radius: 50%; transform: scale(0); background: rgba(255,255,255,0.45); animation: rippleGo .6s var(--ease-out) forwards; pointer-events: none; }
+    .btn-outline .ripple, .btn-danger .ripple { background: color-mix(in oklab, var(--primary) 30%, transparent); }
+    @keyframes rippleGo { to { transform: scale(2.6); opacity: 0; } }
+    .btn-primary { background: var(--grad-primary); color: #fff; box-shadow: 0 4px 14px var(--primary-glow); }
+    .btn-primary:hover { box-shadow: 0 10px 26px var(--primary-glow); }
+    .btn-success { background: var(--grad-success); color: #fff; box-shadow: 0 4px 14px rgba(15,180,127,0.35); }
+    .btn-success:hover { box-shadow: 0 10px 26px rgba(15,180,127,0.45); }
     .btn-danger { background: var(--danger-light); color: var(--danger); }
-    .btn-danger:hover { background: #fecaca; }
-    .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--text-main); }
-    .btn-outline:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px rgba(79,70,229,0.12); }
-    .btn-dark { background: #0f172a; color: white; box-shadow: 0 3px 10px rgba(15,23,42,0.3); }
-    .btn-dark:hover { box-shadow: 0 6px 18px rgba(15,23,42,0.38); }
-    .btn-amber { background: var(--amber); color: white; box-shadow: 0 3px 10px rgba(245,158,11,0.3); }
-    .btn-amber:hover { box-shadow: 0 6px 18px rgba(245,158,11,0.38); }
+    .btn-danger:hover { background: color-mix(in oklab, var(--danger) 22%, transparent); }
+    .btn-outline { background: var(--bg-elev); border: 1.5px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 6px 18px color-mix(in oklab, var(--primary) 18%, transparent); }
+    .btn-dark { background: linear-gradient(135deg,#1e293b,#0f172a); color: #fff; box-shadow: 0 4px 14px rgba(15,23,42,0.35); }
+    html[data-theme="dark"] .btn-dark { background: linear-gradient(135deg,#3b4666,#232b45); }
+    .btn-dark:hover { box-shadow: 0 10px 26px rgba(15,23,42,0.45); }
+    .btn-amber { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #fff; box-shadow: 0 4px 14px rgba(245,158,11,0.35); }
+    .btn-amber:hover { box-shadow: 0 10px 26px rgba(245,158,11,0.45); }
     .icon-sm { font-size: 18px; }
+    .icon-btn { width: 38px; height: 38px; padding: 0; border-radius: 50%; flex-shrink: 0; }
 
     /* ===== Calendar ===== */
     table { width: 100%; min-width: 660px; border-collapse: collapse; }
-    th { background: #f8fafc; color: var(--text-muted); padding: 11px 4px; font-size: 12px; font-weight: 700; border-bottom: 2px solid var(--border); text-align: center; letter-spacing: 0.5px; text-transform: uppercase; }
-    td { width: 14.28%; height: 96px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: top; padding: 0; transition: background 0.25s var(--ease-out); }
-    td:hover .cell-content { background: rgba(79,70,229,0.03); }
-    .cell-content { display: flex; flex-direction: column; height: 100%; padding: 7px; transition: background 0.2s; }
+    th { background: color-mix(in oklab, var(--primary) 6%, var(--bg-surface)); color: var(--text-muted); padding: 12px 4px; font-size: 11px; font-weight: 800; border-bottom: 2px solid var(--border); text-align: center; letter-spacing: 1px; text-transform: uppercase; }
+    td { width: 14.28%; height: 98px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: top; padding: 0; transition: background .25s var(--ease-out); }
+    td:hover .cell-content { background: color-mix(in oklab, var(--primary) 7%, transparent); }
+    .cell-content { display: flex; flex-direction: column; height: 100%; padding: 7px; transition: background .2s; }
     .cell-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: auto; }
-    .date-number { font-size: 13px; font-weight: 700; color: #94a3b8; }
-    .date-number.today { background: var(--primary); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 0 0 4px rgba(79,70,229,0.16); animation: todayPulse 2.4s ease-in-out infinite; }
+    .date-number { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+    .date-number.today { background: var(--grad-primary); color: #fff; width: 23px; height: 23px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 0 0 4px var(--primary-glow); animation: todayPulse 2.4s ease-in-out infinite; }
     @keyframes todayPulse {
-      0%, 100% { box-shadow: 0 0 0 4px rgba(79,70,229,0.16); }
-      50% { box-shadow: 0 0 0 7px rgba(79,70,229,0.07); }
+      0%, 100% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 26%, transparent); }
+      50% { box-shadow: 0 0 0 9px color-mix(in oklab, var(--primary) 6%, transparent); }
     }
 
     /* ===== Animated checkbox tick ===== */
     .checkbox-container { display: block; position: relative; cursor: pointer; width: 22px; height: 22px; }
     .checkbox-container input { position: absolute; opacity: 0; }
-    .checkmark { position: absolute; top: 0; left: 0; height: 22px; width: 22px; border: 2px solid #cbd5e1; border-radius: 7px; background: #fff; transition: background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), transform 0.2s var(--ease-spring), box-shadow 0.2s; }
-    .checkbox-container:hover .checkmark { border-color: var(--success); transform: scale(1.1); }
-    .checkbox-container input:checked ~ .checkmark { background: var(--success); border-color: var(--success); animation: tickBounce 0.4s var(--ease-spring); box-shadow: 0 3px 8px rgba(16,185,129,0.4); }
-    @keyframes tickBounce {
-      0%   { transform: scale(0.7); }
-      55%  { transform: scale(1.18); }
-      100% { transform: scale(1); }
-    }
+    .checkmark { position: absolute; top: 0; left: 0; height: 22px; width: 22px; border: 2px solid color-mix(in oklab, var(--text-muted) 45%, transparent); border-radius: 7px; background: var(--bg-elev); transition: background .2s var(--ease-out), border-color .2s var(--ease-out), transform .2s var(--ease-spring), box-shadow .2s; }
+    .checkbox-container:hover .checkmark { border-color: var(--success); transform: scale(1.12); }
+    .checkbox-container input:checked ~ .checkmark { background: var(--grad-success); border-color: var(--success); animation: tickBounce 0.4s var(--ease-spring); box-shadow: 0 4px 12px rgba(15,180,127,0.45); }
+    @keyframes tickBounce { 0% { transform: scale(0.7); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
     .checkmark:after { content: ""; position: absolute; display: none; left: 6px; top: 3px; width: 5px; height: 9px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
     .checkbox-container input:checked ~ .checkmark:after { display: block; animation: tickDraw 0.25s 0.08s var(--ease-out) backwards; }
-    @keyframes tickDraw {
-      from { opacity: 0; transform: rotate(45deg) scale(0.4); }
-      to   { opacity: 1; transform: rotate(45deg) scale(1); }
-    }
+    @keyframes tickDraw { from { opacity: 0; transform: rotate(45deg) scale(0.4); } to { opacity: 1; transform: rotate(45deg) scale(1); } }
 
-    .note-badge { margin-top: 6px; font-size: 11px; font-weight: 600; padding: 3px 5px; border-radius: 5px; background: #f1f5f9; text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: transform 0.15s var(--ease-out), box-shadow 0.15s, border-color 0.15s, color 0.15s; }
-    .note-badge:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(15,23,42,0.1); }
+    .note-badge { margin-top: 6px; font-size: 11px; font-weight: 650; padding: 3px 5px; border-radius: 7px; background: color-mix(in oklab, var(--text-muted) 12%, transparent); text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: transform .15s var(--ease-out), box-shadow .15s, border-color .15s, color .15s, background .15s; }
+    .note-badge:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
     .note-badge.has-hours { background: var(--danger-light); color: var(--danger); }
-    .note-badge.is-empty { background: transparent; border: 1px dashed #cbd5e1; color: #cbd5e1; }
+    .note-badge.is-empty { background: transparent; border: 1px dashed color-mix(in oklab, var(--text-muted) 40%, transparent); color: color-mix(in oklab, var(--text-muted) 60%, transparent); }
     .note-badge.is-empty:hover { border-color: var(--primary); color: var(--primary); box-shadow: none; }
 
     /* ===== Stats ===== */
-    .stat-card { flex: 1; min-width: 200px; background: linear-gradient(135deg, var(--primary), #3730a3); padding: 20px; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 16px; color: #fff; box-shadow: var(--shadow-md); position: relative; overflow: hidden; transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out); }
-    .stat-card::before { content: ""; position: absolute; top: -40px; right: -40px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,0.09); pointer-events: none; }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-    .stat-icon { background: rgba(255,255,255,0.22); width: 46px; height: 46px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+    .stat-card { flex: 1; min-width: 200px; background: var(--grad-primary); padding: 20px; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 16px; color: #fff; box-shadow: var(--shadow-md); position: relative; overflow: hidden; transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+    .stat-card::before { content: ""; position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.12); pointer-events: none; }
+    .stat-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%); transform: translateX(-120%); pointer-events: none; }
+    .stat-card:hover::after { animation: sheen 1.1s var(--ease-out); }
+    @keyframes sheen { to { transform: translateX(120%); } }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .stat-icon { background: rgba(255,255,255,0.24); width: 46px; height: 46px; border-radius: 14px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+    .stat-value { font-size: 22px; font-weight: 800; margin: 0; font-variant-numeric: tabular-nums; }
+    @keyframes valuePop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    .stat-value.bump { animation: valuePop .45s var(--ease-spring); }
+
+    /* ===== Sparkline chart ===== */
+    .chart-row { display: flex; align-items: flex-end; gap: 10px; height: 132px; padding-top: 8px; }
+    .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; cursor: default; }
+    .chart-bar { width: 100%; border-radius: 8px 8px 4px 4px; background: var(--grad-primary); box-shadow: 0 6px 16px var(--primary-glow); transform-origin: bottom; animation: growBar .7s var(--ease-spring) backwards; transition: filter .2s; min-height: 4px; }
+    .chart-bar-wrap:hover .chart-bar { filter: brightness(1.15) saturate(1.2); }
+    .chart-bar.is-current { background: var(--grad-success); box-shadow: 0 6px 16px rgba(15,180,127,0.4); }
+    @keyframes growBar { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
+    .chart-label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+    .chart-val { font-size: 10px; font-weight: 800; color: var(--text-main); opacity: .75; font-variant-numeric: tabular-nums; }
 
     /* ===== Review card ===== */
-    .review-card { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: var(--radius-lg); padding: 20px; transition: box-shadow 0.3s var(--ease-out); }
-    .review-card:hover { box-shadow: 0 6px 20px rgba(245,158,11,0.12); }
+    .review-card { background: color-mix(in oklab, var(--amber) 9%, var(--bg-surface)); border: 1.5px solid color-mix(in oklab, var(--amber) 35%, transparent); border-radius: var(--radius-lg); padding: 22px; transition: box-shadow .35s var(--ease-out); }
+    .review-card:hover { box-shadow: 0 10px 30px rgba(245,158,11,0.18); }
     .review-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .review-tag { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s var(--ease-spring); background: #f1f5f9; color: #475569; user-select: none; }
+    .review-tag { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 650; cursor: pointer; border: 1.5px solid transparent; transition: all .2s var(--ease-spring); background: color-mix(in oklab, var(--text-muted) 14%, transparent); color: var(--text-muted); user-select: none; }
     .review-tag:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
     .review-tag:active { transform: scale(0.94); }
-    .review-tag.selected { background: var(--primary-light); color: var(--primary); border-color: var(--primary); animation: tagPop 0.3s var(--ease-spring); }
-    @keyframes tagPop { 0% { transform: scale(0.9); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
-    .review-tag.tag-good { background: #dcfce7; color: #16a34a; }
-    .review-tag.tag-good.selected { background: #16a34a; color: white; border-color: #16a34a; }
-    .review-tag.tag-warn { background: #fef9c3; color: #ca8a04; }
-    .review-tag.tag-warn.selected { background: #ca8a04; color: white; border-color: #ca8a04; }
-    .review-tag.tag-bad { background: #fee2e2; color: #dc2626; }
-    .review-tag.tag-bad.selected { background: #dc2626; color: white; border-color: #dc2626; }
+    .review-tag.selected { animation: tagPop 0.3s var(--ease-spring); }
+    @keyframes tagPop { 0% { transform: scale(0.9); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .review-tag.tag-good { background: color-mix(in oklab, #16a34a 16%, transparent); color: #16a34a; }
+    .review-tag.tag-good.selected { background: #16a34a; color: #fff; border-color: #16a34a; box-shadow: 0 6px 16px rgba(22,163,74,0.35); }
+    .review-tag.tag-warn { background: color-mix(in oklab, #ca8a04 18%, transparent); color: #ca8a04; }
+    .review-tag.tag-warn.selected { background: #ca8a04; color: #fff; border-color: #ca8a04; box-shadow: 0 6px 16px rgba(202,138,4,0.35); }
+    .review-tag.tag-bad { background: color-mix(in oklab, #dc2626 16%, transparent); color: #dc2626; }
+    .review-tag.tag-bad.selected { background: #dc2626; color: #fff; border-color: #dc2626; box-shadow: 0 6px 16px rgba(220,38,38,0.35); }
 
-    /* ===== Modal (fade-in overlay + slide-up content) ===== */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); animation: overlayFade 0.25s var(--ease-out); padding: 16px; }
+    /* ===== Modal ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(8,11,22,0.55); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: overlayFade .25s var(--ease-out); padding: 16px; }
     @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
-    .modal-content { width: 100%; max-width: 460px; padding: 28px; background: #fff; border-radius: var(--radius-lg); box-shadow: 0 24px 70px rgba(15,23,42,0.25); animation: modalSlideUp 0.35s var(--ease-spring); }
-    @keyframes modalSlideUp {
-      from { opacity: 0; transform: translateY(28px) scale(0.96); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
+    .modal-content { width: 100%; max-width: 470px; padding: 28px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: modalSlideUp .38s var(--ease-spring); }
+    @keyframes modalSlideUp { from { opacity: 0; transform: translateY(28px) scale(0.96); } to { opacity: 1; transform: none; } }
     #loginOverlay { background: var(--bg-body); z-index: 9999; display: flex; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
     #loginOverlay .card { animation: modalSlideUp 0.5s var(--ease-spring); }
-    #signaturePad { width: 100%; height: 155px; border: 2px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; cursor: crosshair; touch-action: none; transition: border-color 0.2s; }
+    #signaturePad { width: 100%; height: 155px; border: 2px dashed color-mix(in oklab, var(--text-muted) 40%, transparent); border-radius: 14px; background: var(--field); cursor: crosshair; touch-action: none; transition: border-color .2s; }
     #signaturePad:hover { border-color: var(--primary); }
 
+    /* ===== Command palette ===== */
+    #cmdPalette { align-items: flex-start; padding-top: 12vh; }
+    #cmdPalette .modal-content { max-width: 520px; padding: 14px; }
+    #cmdInput { width: 100%; font-size: 16px; padding: 14px; }
+    .cmd-list { margin-top: 10px; max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+    .cmd-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s, transform .15s; }
+    .cmd-item .material-symbols-rounded { font-size: 19px; color: var(--primary); }
+    .cmd-item .kbd { margin-left: auto; }
+    .cmd-item.active, .cmd-item:hover { background: color-mix(in oklab, var(--primary) 14%, transparent); transform: translateX(2px); }
+    .kbd { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; background: color-mix(in oklab, var(--text-muted) 16%, transparent); color: var(--text-muted); letter-spacing: .5px; }
+
     /* ===== Toast notifications ===== */
-    #toastContainer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; width: 100%; max-width: 380px; padding: 0 16px; }
-    .toast { display: flex; align-items: center; gap: 10px; background: #0f172a; color: #fff; padding: 12px 18px; border-radius: 14px; font-size: 14px; font-weight: 600; box-shadow: 0 12px 32px rgba(15,23,42,0.3); animation: toastIn 0.4s var(--ease-spring); max-width: 100%; pointer-events: auto; }
+    #toastContainer { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; width: 100%; max-width: 400px; padding: 0 16px; }
+    .toast { display: flex; align-items: center; gap: 10px; background: rgba(15,23,42,0.92); backdrop-filter: blur(14px); color: #fff; padding: 12px 18px; border-radius: 16px; font-size: 14px; font-weight: 650; box-shadow: 0 16px 40px rgba(15,23,42,0.4); animation: toastIn .45s var(--ease-spring); max-width: 100%; pointer-events: auto; border: 1px solid rgba(255,255,255,0.1); }
     .toast .material-symbols-rounded { font-size: 20px; flex-shrink: 0; }
     .toast.toast-success .material-symbols-rounded { color: #34d399; }
     .toast.toast-error .material-symbols-rounded { color: #f87171; }
-    .toast.toast-info .material-symbols-rounded { color: #818cf8; }
-    .toast.hide { animation: toastOut 0.35s var(--ease-out) forwards; }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(24px) scale(0.92); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes toastOut {
-      from { opacity: 1; transform: translateY(0) scale(1); }
-      to   { opacity: 0; transform: translateY(14px) scale(0.94); }
-    }
+    .toast.toast-info .material-symbols-rounded { color: #a5b4fc; }
+    .toast.hide { animation: toastOut .35s var(--ease-out) forwards; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(24px) scale(0.92); } to { opacity: 1; transform: none; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(14px) scale(0.94); } }
+
+    /* ===== Confetti ===== */
+    .confetti { position: fixed; width: 9px; height: 14px; z-index: 9998; pointer-events: none; border-radius: 2px; animation: confFall linear forwards; }
+    @keyframes confFall { to { transform: translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity: 0; } }
+
+    /* ===== Sync pill ===== */
+    .sync-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; padding: 5px 10px; border-radius: 999px; background: color-mix(in oklab, var(--success) 16%, transparent); color: var(--success); letter-spacing: .4px; transition: opacity .3s; }
+    .sync-pill .material-symbols-rounded { font-size: 14px; }
+    .sync-pill.syncing { background: color-mix(in oklab, var(--primary) 16%, transparent); color: var(--primary); }
+    .sync-pill.syncing .material-symbols-rounded { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== Reduced motion ===== */
     @media (prefers-reduced-motion: reduce) {
@@ -185,13 +244,14 @@
     /* ===== Mobile ===== */
     @media (max-width: 640px) {
       body { padding: 12px 10px; }
-      .card { padding: 16px; border-radius: 14px; }
+      .card { padding: 16px; border-radius: 16px; }
       h2 { font-size: 18px; }
-      .user-header { padding: 10px 14px; top: 8px; }
+      .user-header { padding: 9px 12px; top: 8px; }
       .toolbar-row { gap: 10px; }
       .btn-group { flex-wrap: wrap; }
       button { padding: 10px 14px; font-size: 13px; }
       .stat-card { min-width: 100%; }
+      .hide-sm { display: none !important; }
     }
 
     /* ===== Print (structure preserved — DO NOT ALTER) ===== */
@@ -214,16 +274,17 @@
 
 <!-- LOGIN -->
 <div id="loginOverlay" class="modal-overlay">
-  <div class="card" style="max-width:400px; text-align:center; width:90%;">
-    <div style="background:var(--primary-light); width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
-      <span class="material-symbols-rounded" style="color:var(--primary); font-size:32px;">lock</span>
+  <div class="card" style="max-width:420px; text-align:center; width:90%;">
+    <div style="background:var(--grad-primary); width:70px; height:70px; border-radius:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; box-shadow:0 12px 30px var(--primary-glow);">
+      <span class="material-symbols-rounded" style="color:#fff; font-size:34px;">school</span>
     </div>
-    <h2 style="justify-content:center; margin-bottom:10px; font-size:20px;">Xác Thực Bảo Mật</h2>
-    <p style="color:var(--text-muted); margin-bottom:24px; font-size:14px; line-height:1.6;">Đăng nhập để đồng bộ dữ liệu lịch dạy lên đám mây.</p>
-    <button class="btn-outline" onclick="loginWithGoogle()" style="width:100%; padding:13px; font-size:15px; border-radius:12px;">
+    <h2 style="justify-content:center; margin-bottom:10px; font-size:21px;">Quản Lý Gia Sư</h2>
+    <p style="color:var(--text-muted); margin-bottom:24px; font-size:14px; line-height:1.65;">Đăng nhập để đồng bộ lịch dạy, hóa đơn và nhận xét lên đám mây.</p>
+    <button class="btn-outline" onclick="loginWithGoogle()" style="width:100%; padding:13px; font-size:15px; border-radius:14px;">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px; height:20px;" alt=""/>
       Đăng nhập bằng Google
     </button>
+    <p style="margin-top:16px; font-size:12px; color:var(--text-muted);">Dữ liệu được lưu riêng theo tài khoản của bạn.</p>
   </div>
 </div>
 
@@ -233,22 +294,27 @@
     <div class="user-info">
       <div class="user-avatar" id="userAvatar">U</div>
       <span id="userEmail" style="font-size:13px;">Đang tải...</span>
+      <span class="sync-pill hide-sm" id="syncPill"><span class="material-symbols-rounded">cloud_done</span> Đã lưu</span>
     </div>
-    <button class="btn-outline" onclick="logout()" style="font-size:13px; padding:8px 14px;">
-      <span class="material-symbols-rounded icon-sm">logout</span> Đăng xuất
-    </button>
+    <div class="btn-group">
+      <button class="btn-outline icon-btn" onclick="openPalette()" title="Bảng lệnh (Ctrl + K)" aria-label="Bảng lệnh"><span class="material-symbols-rounded icon-sm">search</span></button>
+      <button class="btn-outline icon-btn" onclick="toggleTheme()" title="Sáng / Tối (Ctrl + J)" aria-label="Đổi giao diện"><span class="material-symbols-rounded icon-sm" id="themeIcon">dark_mode</span></button>
+      <button class="btn-outline" onclick="logout()" style="font-size:13px; padding:8px 14px;">
+        <span class="material-symbols-rounded icon-sm">logout</span> <span class="hide-sm">Đăng xuất</span>
+      </button>
+    </div>
   </div>
 
   <!-- CONTROLS -->
   <div class="card">
     <h2><span class="material-symbols-rounded">calendar_month</span> Quản lý Lịch Gia Sư</h2>
-    <div class="toolbar-row" style="margin-top:16px;">
+    <div class="toolbar-row" style="margin-top:18px;">
       <div class="input-group"><label>Chọn học sinh</label><select id="studentSelect"></select></div>
       <div class="input-group">
         <label>Thêm học sinh mới</label>
         <div class="btn-group">
-          <input type="text" id="newStudent" placeholder="Nhập tên học sinh..." style="flex:1;" />
-          <button class="btn-primary" onclick="addStudent()" aria-label="Thêm học sinh"><span class="material-symbols-rounded icon-sm">add</span></button>
+          <input type="text" id="newStudent" placeholder="Nhập tên học sinh..." style="flex:1;" onkeydown="if(event.key==='Enter')addStudent()" />
+          <button class="btn-primary icon-btn" onclick="addStudent()" aria-label="Thêm học sinh"><span class="material-symbols-rounded icon-sm">add</span></button>
         </div>
       </div>
       <div class="btn-group" style="padding-bottom:2px;">
@@ -261,6 +327,8 @@
       <div class="input-group"><label>Năm</label><select id="yearSelect"></select></div>
       <div class="input-group"><label>Đơn giá / Buổi (VNĐ)</label><input type="number" id="priceInput" placeholder="Nhập đơn giá..." /></div>
       <div class="btn-group" style="padding-bottom:2px;">
+        <button class="btn-outline icon-btn" onclick="shiftMonth(-1)" title="Tháng trước (←)" aria-label="Tháng trước"><span class="material-symbols-rounded icon-sm">chevron_left</span></button>
+        <button class="btn-outline icon-btn" onclick="shiftMonth(1)" title="Tháng sau (→)" aria-label="Tháng sau"><span class="material-symbols-rounded icon-sm">chevron_right</span></button>
         <button class="btn-outline" onclick="clearCheckboxes()"><span class="material-symbols-rounded icon-sm">mop</span> Làm mới</button>
       </div>
     </div>
@@ -275,23 +343,29 @@
   <div style="display:flex; gap:16px; flex-wrap:wrap;">
     <div class="stat-card">
       <div class="stat-icon"><span class="material-symbols-rounded">check_circle</span></div>
-      <div><p style="font-size:12px; opacity:0.85; margin-bottom:4px;">Số buổi đã dạy</p><p id="sessionCount" style="font-size:22px; font-weight:800; margin:0;">0 buổi</p></div>
+      <div><p style="font-size:12px; opacity:0.85; margin-bottom:4px;">Số buổi đã dạy</p><p id="sessionCount" class="stat-value">0 buổi</p></div>
     </div>
-    <div class="stat-card" style="background:linear-gradient(135deg,#10b981,#047857);">
+    <div class="stat-card" style="background:var(--grad-success);">
       <div class="stat-icon"><span class="material-symbols-rounded">payments</span></div>
-      <div><p style="font-size:12px; opacity:0.85; margin-bottom:4px;">Tổng tiền học sinh này</p><p id="totalMoney" style="font-size:22px; font-weight:800; margin:0;">0 VNĐ</p></div>
+      <div><p style="font-size:12px; opacity:0.85; margin-bottom:4px;">Tổng tiền học sinh này</p><p id="totalMoney" class="stat-value">0 VNĐ</p></div>
     </div>
+  </div>
+
+  <!-- TREND CHART -->
+  <div class="card">
+    <h3 style="margin-bottom:4px;"><span class="material-symbols-rounded" style="color:var(--primary);">bar_chart</span> Doanh thu 6 tháng gần nhất <span id="chartStudent" style="font-weight:600; color:var(--text-muted); font-size:13px;"></span></h3>
+    <div class="chart-row" id="trendChart"></div>
   </div>
 
   <!-- ==================== NHẬN XÉT HỌC SINH ==================== -->
   <div class="review-card">
-    <h3 style="color:#92400e; margin-bottom:12px;">
-      <span class="material-symbols-rounded" style="color:#f59e0b;">rate_review</span>
+    <h3 style="color:#b45309; margin-bottom:12px;">
+      <span class="material-symbols-rounded" style="color:var(--amber);">rate_review</span>
       Nhận Xét Học Sinh Tháng Này
     </h3>
 
     <!-- Tags nhanh -->
-    <p style="font-size:12px; font-weight:700; color:#78716c; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Đánh giá nhanh:</p>
+    <p style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Đánh giá nhanh:</p>
     <div class="review-tags" id="reviewTagsContainer">
       <span class="review-tag tag-good" data-tag="Tiến bộ tốt" onclick="toggleTag(this)">🌟 Tiến bộ tốt</span>
       <span class="review-tag tag-good" data-tag="Chăm chỉ" onclick="toggleTag(this)">💪 Chăm chỉ</span>
@@ -304,10 +378,11 @@
     </div>
 
     <!-- Nhận xét chi tiết -->
-    <p style="font-size:12px; font-weight:700; color:#78716c; text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 6px;">Nhận xét chi tiết:</p>
-    <textarea id="reviewText" placeholder="VD: Em học tốt môn Toán, cần ôn lại phần phương trình bậc 2. Thái độ nghiêm túc, hoàn thành đầy đủ bài tập về nhà..." style="width:100%; background:#fffbf0; border-color:#fde68a;"></textarea>
+    <p style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin:14px 0 6px;">Nhận xét chi tiết:</p>
+    <textarea id="reviewText" placeholder="VD: Em học tốt môn Toán, cần ôn lại phần phương trình bậc 2. Thái độ nghiêm túc, hoàn thành đầy đủ bài tập về nhà..." style="width:100%;"></textarea>
 
-    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--text-muted);"><span class="kbd">Ctrl</span> + <span class="kbd">S</span> để lưu nhanh</span>
       <button class="btn-amber" onclick="saveReview()">
         <span class="material-symbols-rounded icon-sm">save</span> Lưu nhận xét
       </button>
@@ -329,9 +404,9 @@
     <button class="btn-outline" style="width:100%; border-style:dashed; color:var(--text-muted);" onclick="toggleGlobalSummary()">
       <span class="material-symbols-rounded icon-sm">account_balance</span> Bật / Tắt thống kê doanh thu tất cả học sinh
     </button>
-    <div id="globalSummary" style="display:none; margin-top:14px; background:#ecfdf5; border:1px solid #a7f3d0; color:#047857; padding:16px; border-radius:10px; font-weight:700; font-size:15px;"></div>
-    <div style="margin-top:14px; font-size:13px; color:#64748b; font-weight:500;">
-      💡 Nhấn <strong style="color:var(--primary);">Ctrl + Q</strong> để cài đặt chữ ký và người lập phiếu.
+    <div id="globalSummary" style="display:none; margin-top:14px; background:color-mix(in oklab, var(--success) 12%, transparent); border:1px solid color-mix(in oklab, var(--success) 35%, transparent); color:var(--success); padding:16px; border-radius:14px; font-weight:800; font-size:15px;"></div>
+    <div style="margin-top:14px; font-size:13px; color:var(--text-muted); font-weight:500;">
+      💡 <span class="kbd">Ctrl</span> + <span class="kbd">K</span> mở bảng lệnh &nbsp;·&nbsp; <span class="kbd">Ctrl</span> + <span class="kbd">Q</span> cài đặt chữ ký
     </div>
   </div>
 </div>
@@ -339,7 +414,7 @@
 <!-- SIGNATURE MODAL -->
 <div id="signatureModal" class="modal-overlay">
   <div class="modal-content">
-    <h3 style="font-size:17px;"><span class="material-symbols-rounded">draw</span> Cài đặt Chữ ký &amp; Thông tin</h3>
+    <h3 style="font-size:17px;"><span class="material-symbols-rounded" style="color:var(--primary);">draw</span> Cài đặt Chữ ký &amp; Thông tin</h3>
     <div class="input-group" style="margin-top:16px;">
       <label style="display:flex; justify-content:space-between; align-items:center;">
         Vẽ chữ ký
@@ -356,8 +431,37 @@
   </div>
 </div>
 
-<div id="printArea" class="print-area"></div>
+<!-- NOTE MODAL -->
+<div id="noteModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:420px;">
+    <h3 style="font-size:17px;"><span class="material-symbols-rounded" style="color:var(--primary);">edit_note</span> Ghi chú buổi học <span id="noteDayLabel" style="color:var(--text-muted); font-weight:600; font-size:13px;"></span></h3>
+    <div class="review-tags" style="margin-bottom:10px;">
+      <span class="review-tag" onclick="setNoteQuick('#1h')">#1h</span>
+      <span class="review-tag" onclick="setNoteQuick('#1.5h')">#1.5h</span>
+      <span class="review-tag" onclick="setNoteQuick('#2h')">#2h</span>
+      <span class="review-tag" onclick="setNoteQuick('#3h')">#3h</span>
+      <span class="review-tag" onclick="setNoteQuick('Kiểm tra')">Kiểm tra</span>
+      <span class="review-tag" onclick="setNoteQuick('Dạy bù')">Dạy bù</span>
+    </div>
+    <div class="input-group"><label>Nội dung ghi chú</label><input type="text" id="noteInput" placeholder="VD: #2h hoặc Ôn tập chương 3" onkeydown="if(event.key==='Enter')saveNote()" /></div>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">Mẹo: ghi <strong>#2h</strong> để tính tiền theo số giờ (1 buổi = 2h).</p>
+    <div class="btn-group" style="margin-top:20px; justify-content:flex-end;">
+      <button class="btn-danger" onclick="clearNote()"><span class="material-symbols-rounded icon-sm">delete</span> Xoá</button>
+      <button class="btn-outline" onclick="closeNoteModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveNote()"><span class="material-symbols-rounded icon-sm">check</span> Lưu</button>
+    </div>
+  </div>
+</div>
 
+<!-- COMMAND PALETTE -->
+<div id="cmdPalette" class="modal-overlay">
+  <div class="modal-content">
+    <input type="text" id="cmdInput" placeholder="Tìm lệnh hoặc học sinh..." oninput="renderPalette()" />
+    <div class="cmd-list" id="cmdList"></div>
+  </div>
+</div>
+
+<div id="printArea" class="print-area"></div>
 <script>
   /* ===== TOAST NOTIFICATION SYSTEM (thay thế alert) ===== */
   function showToast(message, type = 'info') {
@@ -372,6 +476,36 @@
       toast.addEventListener('animationend', () => toast.remove(), { once: true });
     }, 3000);
   }
+
+  /* ===== HAPTIC + RIPPLE MICRO-INTERACTIONS ===== */
+  function haptic(ms = 12){ if(navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} }
+  document.addEventListener('pointerdown', e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    haptic(10);
+    const r = btn.getBoundingClientRect(), d = Math.max(r.width, r.height);
+    const s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.width = s.style.height = d + 'px';
+    s.style.left = (e.clientX - r.left - d/2) + 'px';
+    s.style.top  = (e.clientY - r.top  - d/2) + 'px';
+    btn.appendChild(s);
+    s.addEventListener('animationend', () => s.remove(), { once: true });
+  });
+
+  /* ===== THEME (sáng / tối) ===== */
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeIcon').innerText = t === 'dark' ? 'light_mode' : 'dark_mode';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute('content', t === 'dark' ? '#0a0d18' : '#5b5bd6');
+  }
+  function toggleTheme(){
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('uiTheme', next); applyTheme(next); triggerSync();
+    showToast(next === 'dark' ? 'Đã chuyển giao diện Tối' : 'Đã chuyển giao diện Sáng', 'info');
+  }
+  applyTheme(localStorage.getItem('uiTheme') || 'light');
 
   /* ===== FIREBASE ===== */
   const firebaseConfig = {
@@ -407,9 +541,12 @@
     } else {
       currentUser = null;
       document.getElementById('loginOverlay').style.display = 'flex';
+      const keepTheme = localStorage.getItem('uiTheme');
       localStorage.clear();
+      if(keepTheme) localStorage.setItem('uiTheme', keepTheme);
       document.getElementById('calendarContainer').innerHTML = '';
       updateStats(0, 0);
+      renderTrendChart();
     }
   });
 
@@ -417,17 +554,23 @@
   function logout(){ if(confirm("Đăng xuất?")) auth.signOut(); }
 
   /* ===== FIREBASE SYNC ===== */
+  function setSyncState(state){
+    const pill = document.getElementById('syncPill'); if(!pill) return;
+    if(state === 'syncing'){ pill.classList.add('syncing'); pill.innerHTML = '<span class="material-symbols-rounded">sync</span> Đang lưu'; }
+    else { pill.classList.remove('syncing'); pill.innerHTML = '<span class="material-symbols-rounded">cloud_done</span> Đã lưu'; }
+  }
   function loadFromFirebase(uid){
     db.collection('tutor_data').doc(uid).get().then(doc=>{
       if(doc.exists){ localStorage.clear(); Object.entries(doc.data()).forEach(([k,v])=>localStorage.setItem(k,v)); }
+      applyTheme(localStorage.getItem('uiTheme') || 'light');
       startAppUI();
     }).catch(()=>startAppUI());
   }
   function triggerSync(){
-    if(!currentUser) return; clearTimeout(syncTimeout);
+    if(!currentUser) return; clearTimeout(syncTimeout); setSyncState('syncing');
     syncTimeout = setTimeout(()=>{
       let d={}; for(let i=0;i<localStorage.length;i++){ let k=localStorage.key(i); d[k]=localStorage.getItem(k); }
-      db.collection('tutor_data').doc(currentUser.uid).set(d);
+      db.collection('tutor_data').doc(currentUser.uid).set(d).then(()=>setSyncState('saved')).catch(()=>setSyncState('saved'));
     }, 1500);
   }
 
@@ -445,6 +588,7 @@
       generateCalendar(+yearSelect.value, +monthSelect.value);
       loadReview();
     }
+    renderTrendChart();
   }
 
   /* ===== STUDENT MGMT ===== */
@@ -453,7 +597,7 @@
     let name = document.getElementById("newStudent").value.trim();
     if(!name || [...studentSelect.options].some(o=>o.value===name)) return showToast("Tên rỗng hoặc đã tồn tại!", 'error');
     studentSelect.add(new Option(name,name)); studentSelect.value=name;
-    document.getElementById("newStudent").value=""; saveStudents(); reloadCalendar(); loadReview();
+    document.getElementById("newStudent").value=""; saveStudents(); reloadCalendar(); loadReview(); renderTrendChart();
     showToast(`Đã thêm học sinh "${name}"`, 'success');
   }
   function renameStudent(){
@@ -465,7 +609,7 @@
     let arr=JSON.parse(localStorage.getItem("students"))||defaultStudents;
     arr[arr.indexOf(oldName)]=newName; localStorage.setItem("students",JSON.stringify(arr));
     studentSelect.options[studentSelect.selectedIndex].text=studentSelect.value=newName;
-    reloadCalendar(); loadReview(); triggerSync();
+    reloadCalendar(); loadReview(); renderTrendChart(); triggerSync();
     showToast("Đã đổi tên học sinh", 'success');
   }
   function removeStudent(){
@@ -474,6 +618,7 @@
     studentSelect.remove(studentSelect.selectedIndex); saveStudents();
     if(studentSelect.options.length>0){ studentSelect.selectedIndex=0; reloadCalendar(); loadReview(); }
     else { document.getElementById('calendarContainer').innerHTML=''; updateStats(0,0); reviewText.value=''; }
+    renderTrendChart();
     showToast("Đã xoá học sinh", 'info');
   }
 
@@ -486,18 +631,18 @@
     for(let i=0;i<6&&date<=lastDate;i++){
       table+=`<tr>`;
       for(let j=0;j<7;j++){
-        if(i===0&&j<firstDay||date>lastDate){ table+=`<td style="background:#fafafa;"></td>`; }
+        if(i===0&&j<firstDay||date>lastDate){ table+=`<td style="background:color-mix(in oklab, var(--text-muted) 5%, transparent);"></td>`; }
         else {
           let k=`${student}_${year}_${month}_${date}`, nK=k+"_note";
           let isCh=localStorage.getItem(k)==="true", note=localStorage.getItem(nK)||"";
           let isToday=(date===todayD&&month===todayM&&year===todayY);
           let dnClass=isToday?'date-number today':'date-number';
-          table+=`<td style="${isCh?'background:#f0fdf4;':''}"><div class="cell-content">
+          table+=`<td class="${isCh?'is-checked':''}" style="${isCh?'background:color-mix(in oklab, var(--success) 12%, transparent);':''}"><div class="cell-content">
             <div class="cell-header">
               <span class="${dnClass}">${date}</span>
               <label class="checkbox-container"><input type="checkbox" data-date="${date}" ${isCh?'checked':''} onchange="toggleDate('${k}', this)"><span class="checkmark"></span></label>
             </div>
-            <div class="note-badge ${note?(note.match(/#\d+(\.\d+)?h/i)?'has-hours':''):'is-empty'}" onclick="editNote('${nK}')">
+            <div class="note-badge ${note?(note.match(/#\d+(\.\d+)?h/i)?'has-hours':''):'is-empty'}" onclick="editNote('${nK}', ${date})">
               ${note ? note.replace(/#/g,'') : '<span class="material-symbols-rounded" style="font-size:13px;vertical-align:middle;">add</span>'}
             </div>
           </div></td>`;
@@ -515,11 +660,33 @@
     localStorage.setItem(k, isChecked ? "true" : "false");
     // Cập nhật màu ô ngay lập tức, không cần re-render
     const td = checkbox.closest('td');
-    if(td) td.style.background = isChecked ? '#f0fdf4' : '';
+    if(td) td.style.background = isChecked ? 'color-mix(in oklab, var(--success) 12%, transparent)' : '';
+    haptic(isChecked ? 18 : 8);
     countSelected();
+    renderTrendChart();
     triggerSync();
   };
-  window.editNote=(nK)=>{ let txt=prompt("Ghi chú (VD: #2h):", localStorage.getItem(nK)||""); if(txt!==null){ localStorage.setItem(nK,txt); reloadCalendar(); triggerSync(); } };
+
+  /* --- Note modal (thay prompt) --- */
+  let noteKeyActive = null;
+  window.editNote=(nK, day)=>{
+    noteKeyActive = nK;
+    document.getElementById('noteDayLabel').innerText = day ? `· ngày ${day}` : '';
+    const inp = document.getElementById('noteInput');
+    inp.value = localStorage.getItem(nK) || "";
+    document.getElementById('noteModal').style.display = 'flex';
+    setTimeout(()=>inp.focus(), 60);
+  };
+  function setNoteQuick(v){ const inp=document.getElementById('noteInput'); inp.value = v; inp.focus(); }
+  function closeNoteModal(){ document.getElementById('noteModal').style.display='none'; noteKeyActive=null; }
+  function saveNote(){
+    if(!noteKeyActive) return;
+    const val = document.getElementById('noteInput').value.trim();
+    if(val) localStorage.setItem(noteKeyActive, val); else localStorage.removeItem(noteKeyActive);
+    closeNoteModal(); reloadCalendar(); renderTrendChart(); triggerSync();
+    showToast(val ? "Đã lưu ghi chú" : "Đã xoá ghi chú", 'success');
+  }
+  function clearNote(){ if(!noteKeyActive) return; localStorage.removeItem(noteKeyActive); closeNoteModal(); reloadCalendar(); renderTrendChart(); triggerSync(); showToast("Đã xoá ghi chú", 'info'); }
 
   function clearCheckboxes(){
     if(!confirm("Xoá toàn bộ lịch tháng này?")) return;
@@ -527,13 +694,13 @@
       localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}`);
       localStorage.removeItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${d}_note`);
     }
-    reloadCalendar(); triggerSync();
+    reloadCalendar(); renderTrendChart(); triggerSync();
     showToast("Đã làm mới lịch tháng này", 'info');
   }
 
   function countSelected(){
     let price=+priceInput.value||0, count=0, money=0;
-    document.querySelectorAll('input[type="checkbox"]:checked').forEach(c=>{
+    document.querySelectorAll('#calendarContainer input[type="checkbox"]:checked').forEach(c=>{
       count++;
       let match=(localStorage.getItem(`${studentSelect.value}_${yearSelect.value}_${monthSelect.value}_${c.dataset.date}_note`)||"").match(/#(\d+(\.\d+)?)h/i);
       money+=match ? price*(parseFloat(match[1])/2) : price;
@@ -541,18 +708,60 @@
     updateStats(count, money);
     if(document.getElementById("globalSummary").style.display==="block") updateGlobalSummary();
   }
+  function bump(el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
   function updateStats(c,m){
-    document.getElementById("sessionCount").innerText=c+" buổi";
-    document.getElementById("totalMoney").innerText=m.toLocaleString()+" VNĐ";
+    const s=document.getElementById("sessionCount"), t=document.getElementById("totalMoney");
+    if(s.innerText !== c+" buổi") bump(s);
+    if(t.innerText !== m.toLocaleString()+" VNĐ") bump(t);
+    s.innerText=c+" buổi";
+    t.innerText=m.toLocaleString()+" VNĐ";
   }
   function reloadCalendar(){ if(studentSelect.options.length) generateCalendar(+yearSelect.value, +monthSelect.value); }
 
-  yearSelect.onchange = monthSelect.onchange = ()=>{ reloadCalendar(); loadReview(); };
+  /* ===== MONTH REVENUE HELPERS + CHART ===== */
+  function monthTotal(student, y, m){
+    let p=+(localStorage.getItem(student+"_price")||0), total=0;
+    for(let d=1;d<=31;d++) if(localStorage.getItem(`${student}_${y}_${m}_${d}`)==="true"){
+      let n=localStorage.getItem(`${student}_${y}_${m}_${d}_note`)||"";
+      let match=n.match(/#(\d+(\.\d+)?)h/i);
+      total+=match ? p*(parseFloat(match[1])/2) : p;
+    }
+    return total;
+  }
+  function renderTrendChart(){
+    const host=document.getElementById('trendChart'); if(!host) return;
+    const label=document.getElementById('chartStudent');
+    const s=studentSelect.value;
+    label.innerText = s ? '· '+s : '';
+    if(!s){ host.innerHTML='<p style="font-size:13px;color:var(--text-muted);">Chưa có dữ liệu.</p>'; return; }
+    let y=+yearSelect.value, m=+monthSelect.value, data=[];
+    for(let i=5;i>=0;i--){ let dt=new Date(y, m-i, 1); data.push({ y:dt.getFullYear(), m:dt.getMonth(), v:monthTotal(s, dt.getFullYear(), dt.getMonth()) }); }
+    const max=Math.max(...data.map(d=>d.v), 1);
+    host.innerHTML = data.map((d,i)=>{
+      const h=Math.max(4, Math.round(d.v/max*96));
+      const cur = d.y===y && d.m===m;
+      return `<div class="chart-bar-wrap" title="Tháng ${d.m+1}/${d.y}: ${d.v.toLocaleString()} VNĐ">
+        <div class="chart-val">${d.v ? (d.v/1000000>=1 ? (d.v/1000000).toFixed(1)+'tr' : Math.round(d.v/1000)+'k') : ''}</div>
+        <div class="chart-bar ${cur?'is-current':''}" style="height:${h}px; animation-delay:${i*0.06}s;"></div>
+        <div class="chart-label">T${d.m+1}</div>
+      </div>`;
+    }).join('');
+  }
+
+  yearSelect.onchange = monthSelect.onchange = ()=>{ reloadCalendar(); loadReview(); renderTrendChart(); };
   studentSelect.onchange = ()=>{
     priceInput.value=localStorage.getItem(studentSelect.value+"_price")||"";
-    reloadCalendar(); loadReview();
+    reloadCalendar(); loadReview(); renderTrendChart();
   };
-  priceInput.onchange=()=>{ localStorage.setItem(studentSelect.value+"_price", priceInput.value); countSelected(); triggerSync(); };
+  priceInput.onchange=()=>{ localStorage.setItem(studentSelect.value+"_price", priceInput.value); countSelected(); renderTrendChart(); triggerSync(); };
+
+  function shiftMonth(delta){
+    let m=+monthSelect.value+delta, y=+yearSelect.value;
+    if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
+    if(y<2024||y>2030) return;
+    monthSelect.value=m; yearSelect.value=y;
+    reloadCalendar(); loadReview(); renderTrendChart();
+  }
 
   /* ===== GLOBAL SUMMARY ===== */
   function toggleGlobalSummary(){ let el=document.getElementById("globalSummary"); el.style.display=el.style.display==="none"?"block":"none"; if(el.style.display==="block") updateGlobalSummary(); }
@@ -581,18 +790,19 @@
     let key=getReviewKey(), tKey=getTagsKey();
     reviewText.value=localStorage.getItem(key)||"";
     let savedTags=JSON.parse(localStorage.getItem(tKey)||"[]");
-    document.querySelectorAll('.review-tag').forEach(tag=>{
+    document.querySelectorAll('#reviewTagsContainer .review-tag').forEach(tag=>{
       tag.classList.toggle('selected', savedTags.includes(tag.dataset.tag));
     });
   }
 
   window.toggleTag=(el)=>{
     el.classList.toggle('selected');
+    haptic(10);
     saveTagsQuiet();
   };
 
   function saveTagsQuiet(){
-    let selected=[]; document.querySelectorAll('.review-tag.selected').forEach(t=>selected.push(t.dataset.tag));
+    let selected=[]; document.querySelectorAll('#reviewTagsContainer .review-tag.selected').forEach(t=>selected.push(t.dataset.tag));
     localStorage.setItem(getTagsKey(), JSON.stringify(selected));
     triggerSync();
   }
@@ -601,9 +811,12 @@
     localStorage.setItem(getReviewKey(), reviewText.value.trim());
     saveTagsQuiet();
     // Visual feedback
-    let btn=event.currentTarget; btn.innerHTML='<span class="material-symbols-rounded icon-sm">check</span> Đã lưu!';
-    btn.style.background='#10b981';
-    setTimeout(()=>{ btn.innerHTML='<span class="material-symbols-rounded icon-sm">save</span> Lưu nhận xét'; btn.style.background=''; }, 2000);
+    let btn=(typeof event!=='undefined'&&event&&event.currentTarget) ? event.currentTarget : document.querySelector('.review-card .btn-amber');
+    if(btn){
+      btn.innerHTML='<span class="material-symbols-rounded icon-sm">check</span> Đã lưu!';
+      btn.style.background='var(--grad-success)';
+      setTimeout(()=>{ btn.innerHTML='<span class="material-symbols-rounded icon-sm">save</span> Lưu nhận xét'; btn.style.background=''; }, 2000);
+    }
     triggerSync();
     showToast("Đã lưu nhận xét", 'success');
   }
@@ -618,13 +831,13 @@
   canvas.onpointerup=canvas.onpointercancel=()=>{ isD=false; };
   function clearSignature(){ ctx.clearRect(0,0,canvas.width,canvas.height); isB=true; }
 
-  document.addEventListener("keydown",e=>{ if(e.ctrlKey&&e.key.toLowerCase()==='q'){
-    e.preventDefault(); document.getElementById('signatureModal').style.display='flex';
+  function openSignatureModal(){
+    document.getElementById('signatureModal').style.display='flex';
     document.getElementById('adminNameInput').value=localStorage.getItem("adminName")||"Hưng";
     document.getElementById('adminRoleInput').value=localStorage.getItem("adminRole")||"Gia sư";
     let s=localStorage.getItem("adminSig");
     if(s){ isB=false; let i=new Image(); i.onload=()=>ctx.drawImage(i,0,0); i.src=s; } else clearSignature();
-  }});
+  }
   function closeSignatureModal(){ document.getElementById('signatureModal').style.display='none'; }
   function saveSignature(){
     localStorage.setItem("adminName",document.getElementById('adminNameInput').value||"Hưng");
@@ -800,6 +1013,24 @@
     </div>`;
   }
 
+
+  /* ===== CONFETTI (phần thưởng nhỏ khi xuất hóa đơn) ===== */
+  function confetti(n = 26){
+    const colors = ['#5b5bd6','#8b5cf6','#0fb47f','#f59e0b','#ef4444'];
+    for(let i=0;i<n;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = (40 + Math.random()*20) + 'vw';
+      c.style.top = '-20px';
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty('--dx', (Math.random()*400-200) + 'px');
+      c.style.setProperty('--rot', (Math.random()*720-360) + 'deg');
+      c.style.animationDuration = (1.5 + Math.random()*1.1) + 's';
+      document.body.appendChild(c);
+      c.addEventListener('animationend', ()=>c.remove(), { once:true });
+    }
+  }
+
   function downloadImage(){
     let h=getInvHTML(); if(!h) return;
     let p=document.getElementById("printArea");
@@ -812,6 +1043,7 @@
         l.href=c.toDataURL('image/png');
         l.click();
         p.classList.remove('capture-mode'); p.innerHTML="";
+        confetti(); haptic(30);
         showToast("Đã tải ảnh hóa đơn thành công!", 'success');
       });
     }, 350);
@@ -822,6 +1054,83 @@
     document.getElementById("printArea").innerHTML=h;
     setTimeout(()=>window.print(), 300);
   }
+
+  /* ===== COMMAND PALETTE (Ctrl + K) ===== */
+  let cmdIndex = 0;
+  function baseCommands(){
+    return [
+      { icon:'image',           label:'Tải ảnh hóa đơn',            keys:'Ctrl D', run: downloadImage },
+      { icon:'print',           label:'In bảng giấy A4',            keys:'',        run: printInvoice },
+      { icon:'save',            label:'Lưu nhận xét',               keys:'Ctrl S',  run: saveReview },
+      { icon:'draw',            label:'Cài đặt chữ ký & thông tin',  keys:'Ctrl Q',  run: openSignatureModal },
+      { icon:'dark_mode',       label:'Đổi giao diện Sáng / Tối',    keys:'Ctrl J',  run: toggleTheme },
+      { icon:'chevron_left',    label:'Tháng trước',                 keys:'←',       run: ()=>shiftMonth(-1) },
+      { icon:'chevron_right',   label:'Tháng sau',                   keys:'→',       run: ()=>shiftMonth(1) },
+      { icon:'account_balance', label:'Thống kê doanh thu tất cả HS',keys:'',        run: toggleGlobalSummary },
+      { icon:'mop',             label:'Làm mới lịch tháng này',      keys:'',        run: clearCheckboxes },
+    ];
+  }
+  function allCommands(){
+    const students = Array.from(studentSelect.options).map(o => ({
+      icon:'person', label:'Chuyển tới học sinh: '+o.value, keys:'',
+      run: ()=>{ studentSelect.value=o.value; studentSelect.onchange(); showToast('Đang xem: '+o.value, 'info'); }
+    }));
+    return [...students, ...baseCommands()];
+  }
+  function renderPalette(){
+    const q = document.getElementById('cmdInput').value.trim().toLowerCase();
+    const items = allCommands().filter(c => c.label.toLowerCase().includes(q));
+    cmdIndex = Math.min(cmdIndex, Math.max(items.length-1, 0));
+    window.__cmdItems = items;
+    document.getElementById('cmdList').innerHTML = items.length ? items.map((c,i)=>
+      `<div class="cmd-item ${i===cmdIndex?'active':''}" data-i="${i}" onclick="runCmd(${i})">
+        <span class="material-symbols-rounded">${c.icon}</span><span>${c.label}</span>
+        ${c.keys?`<span class="kbd">${c.keys}</span>`:''}
+      </div>`).join('') : '<div class="cmd-item">Không tìm thấy lệnh nào</div>';
+  }
+  function runCmd(i){ const c=(window.__cmdItems||[])[i]; closePalette(); if(c) setTimeout(c.run, 80); }
+  function openPalette(){
+    document.getElementById('cmdPalette').style.display='flex';
+    const inp=document.getElementById('cmdInput'); inp.value=''; cmdIndex=0; renderPalette();
+    setTimeout(()=>inp.focus(), 60);
+  }
+  function closePalette(){ document.getElementById('cmdPalette').style.display='none'; }
+
+  /* ===== KEYBOARD SHORTCUTS ===== */
+  document.addEventListener('keydown', e => {
+    const paletteOpen = document.getElementById('cmdPalette').style.display === 'flex';
+    const key = (e.key || '').toLowerCase();
+
+    if(paletteOpen){
+      const items = window.__cmdItems || [];
+      if(key === 'arrowdown'){ e.preventDefault(); cmdIndex = Math.min(cmdIndex+1, items.length-1); renderPalette(); return; }
+      if(key === 'arrowup'){ e.preventDefault(); cmdIndex = Math.max(cmdIndex-1, 0); renderPalette(); return; }
+      if(key === 'enter'){ e.preventDefault(); runCmd(cmdIndex); return; }
+    }
+
+    if(e.ctrlKey || e.metaKey){
+      if(key === 'k'){ e.preventDefault(); paletteOpen ? closePalette() : openPalette(); return; }
+      if(key === 'q'){ e.preventDefault(); openSignatureModal(); return; }
+      if(key === 'j'){ e.preventDefault(); toggleTheme(); return; }
+      if(key === 's'){ e.preventDefault(); saveReview(); return; }
+      if(key === 'd'){ e.preventDefault(); downloadImage(); return; }
+      return;
+    }
+
+    if(key === 'escape'){
+      closePalette(); closeNoteModal(); closeSignatureModal(); return;
+    }
+    const typing = ['input','textarea','select'].includes((e.target.tagName||'').toLowerCase());
+    if(typing) return;
+    if(key === 'arrowleft'){ shiftMonth(-1); }
+    if(key === 'arrowright'){ shiftMonth(1); }
+  });
+
+  /* Click nền để đóng modal */
+  document.querySelectorAll('.modal-overlay').forEach(ov => {
+    if(ov.id === 'loginOverlay') return;
+    ov.addEventListener('click', e => { if(e.target === ov) ov.style.display = 'none'; });
+  });
 
   // Service Worker
   if('serviceWorker' in navigator){
