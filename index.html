@@ -313,9 +313,47 @@
       .watermark-ui, .container, .modal-overlay, #toastContainer { display: none !important; }
       .print-area { display: block !important; width: 100%; }
     }
+    /* ===== ANIMATED AURORA BACKGROUND ===== */
+    .bg-fx { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+    .bg-fx .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; mix-blend-mode: normal; }
+    html[data-theme="dark"] .bg-fx .orb { opacity: .38; }
+    .orb-1 { width: 46vw; height: 46vw; min-width: 320px; min-height: 320px; background: var(--primary); top: -14vh; right: -8vw; animation: float1 22s var(--ease-out) infinite alternate; }
+    .orb-2 { width: 38vw; height: 38vw; min-width: 260px; min-height: 260px; background: #0fb47f; bottom: -12vh; left: -10vw; animation: float2 26s var(--ease-out) infinite alternate; }
+    .orb-3 { width: 30vw; height: 30vw; min-width: 220px; min-height: 220px; background: #f59e0b; top: 42%; left: 46%; opacity: .3; animation: float3 30s var(--ease-out) infinite alternate; }
+    @keyframes float1 { to { transform: translate3d(-9vw, 12vh, 0) scale(1.18); } }
+    @keyframes float2 { to { transform: translate3d(12vw, -10vh, 0) scale(1.12); } }
+    @keyframes float3 { to { transform: translate3d(-14vw, -8vh, 0) scale(1.25); } }
+    .bg-grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    html.reduce-fx .bg-fx .orb { animation: none !important; }
+    @media (prefers-reduced-motion: reduce) { .bg-fx .orb { animation: none !important; } }
+    @media print { .bg-fx, .bg-grain { display: none !important; } }
+
+    /* ===== DASHBOARD ===== */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .kpi { background: var(--field); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .kpi-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .kpi-value { font-size: 20px; font-weight: 900; margin-top: 6px; letter-spacing: -.5px; }
+    .goal-wrap { margin-top: 16px; background: var(--field); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .goal-bar { height: 12px; border-radius: 99px; background: color-mix(in oklab, var(--text-muted) 18%, transparent); overflow: hidden; margin-top: 10px; }
+    .goal-fill { height: 100%; border-radius: 99px; background: var(--grad-primary); width: 0; transition: width .8s var(--ease-out); box-shadow: 0 0 14px var(--primary-glow); }
+    .rank-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-name { font-weight: 700; font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .rank-name:hover { color: var(--primary); }
+    .rank-track { display: block; flex: 1.4; height: 8px; border-radius: 99px; background: color-mix(in oklab, var(--text-muted) 16%, transparent); overflow: hidden; }
+    .rank-fill { display: block; height: 100%; border-radius: 99px; background: var(--grad-primary); animation: growW .7s var(--ease-out) backwards; }
+    @keyframes growW { from { width: 0 !important; } }
+    .rank-money { font-weight: 800; font-size: 13px; min-width: 96px; text-align: right; }
+    .pay-chip { border: 1.5px solid var(--border); background: var(--bg-elev); color: var(--text-muted); border-radius: 99px; font-size: 11px; font-weight: 800; padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+    .pay-chip.is-paid { background: color-mix(in oklab, var(--success) 16%, transparent); border-color: color-mix(in oklab, var(--success) 45%, transparent); color: var(--success); }
+    @media (max-width: 640px) { .rank-track { display: none !important; } }
   </style>
 </head>
 <body>
+
+<div class="bg-fx" aria-hidden="true"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+<div class="bg-grain" aria-hidden="true"></div>
 
 <div class="watermark-ui">POWERED BY HUNG LE</div>
 
@@ -447,14 +485,14 @@
     </button>
   </div>
 
-  <!-- GLOBAL SUMMARY -->
-  <div class="card" style="text-align:center; padding:20px;">
+  <!-- GLOBAL SUMMARY / DASHBOARD -->
+  <div class="card" style="padding:20px;">
     <button class="btn-outline" style="width:100%; border-style:dashed; color:var(--text-muted);" onclick="toggleGlobalSummary()">
-      <span class="material-symbols-rounded icon-sm">account_balance</span> Bật / Tắt thống kê doanh thu tất cả học sinh
+      <span class="material-symbols-rounded icon-sm">account_balance</span> Bật / Tắt bảng doanh thu tất cả học sinh <span class="kbd" style="margin-left:6px;">Ctrl B</span>
     </button>
-    <div id="globalSummary" style="display:none; margin-top:14px; background:color-mix(in oklab, var(--success) 12%, transparent); border:1px solid color-mix(in oklab, var(--success) 35%, transparent); color:var(--success); padding:16px; border-radius:14px; font-weight:800; font-size:15px;"></div>
-    <div style="margin-top:14px; font-size:13px; color:var(--text-muted); font-weight:500;">
-      💡 <span class="kbd">Ctrl</span> + <span class="kbd">K</span> mở bảng lệnh &nbsp;·&nbsp; <span class="kbd">Ctrl</span> + <span class="kbd">Q</span> cài đặt chữ ký
+    <div id="globalSummary" style="display:none; margin-top:16px; text-align:left;"></div>
+    <div style="margin-top:14px; font-size:13px; color:var(--text-muted); font-weight:500; text-align:center;">
+      💡 <span class="kbd">Ctrl</span> + <span class="kbd">K</span> bảng lệnh &nbsp;·&nbsp; <span class="kbd">Ctrl</span> + <span class="kbd">Q</span> chữ ký &nbsp;·&nbsp; <span class="kbd">Ctrl</span> + <span class="kbd">E</span> xuất CSV
     </div>
   </div>
 </div>
@@ -714,6 +752,16 @@
       loadReview();
     }
     renderTrendChart();
+    if(localStorage.getItem('ui_fx') === '0') document.documentElement.classList.add('reduce-fx');
+    if(localStorage.getItem('ui_dash') === '1'){
+      document.getElementById('globalSummary').style.display = 'block';
+      updateGlobalSummary();
+    }
+  }
+  function toggleFx(){
+    const off = document.documentElement.classList.toggle('reduce-fx');
+    localStorage.setItem('ui_fx', off ? '0' : '1');
+    showToast(off ? 'Đã tắt hiệu ứng nền động' : 'Đã bật hiệu ứng nền động', 'info');
   }
 
   /* ===== STUDENT MGMT ===== */
@@ -873,34 +921,165 @@
     }).join('');
   }
 
-  yearSelect.onchange = monthSelect.onchange = ()=>{ reloadCalendar(); loadReview(); renderTrendChart(); };
+  function refreshDash(){ if(document.getElementById("globalSummary").style.display==="block") updateGlobalSummary(); }
+  yearSelect.onchange = monthSelect.onchange = ()=>{ reloadCalendar(); loadReview(); renderTrendChart(); refreshDash(); };
   studentSelect.onchange = ()=>{
     priceInput.value=localStorage.getItem(studentSelect.value+"_price")||"";
-    reloadCalendar(); loadReview(); renderTrendChart();
+    reloadCalendar(); loadReview(); renderTrendChart(); refreshDash();
   };
-  priceInput.onchange=()=>{ localStorage.setItem(studentSelect.value+"_price", priceInput.value); countSelected(); renderTrendChart(); triggerSync(); };
+  priceInput.onchange=()=>{ localStorage.setItem(studentSelect.value+"_price", priceInput.value); countSelected(); renderTrendChart(); refreshDash(); triggerSync(); };
 
   function shiftMonth(delta){
     let m=+monthSelect.value+delta, y=+yearSelect.value;
     if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
     if(y<2024||y>2030) return;
     monthSelect.value=m; yearSelect.value=y;
-    reloadCalendar(); loadReview(); renderTrendChart();
+    reloadCalendar(); loadReview(); renderTrendChart(); refreshDash();
   }
 
-  /* ===== GLOBAL SUMMARY ===== */
-  function toggleGlobalSummary(){ let el=document.getElementById("globalSummary"); el.style.display=el.style.display==="none"?"block":"none"; if(el.style.display==="block") updateGlobalSummary(); }
+  /* ===== GLOBAL DASHBOARD ===== */
+  function students(){ return Array.from(studentSelect.options).map(o=>o.value); }
+  function monthSessions(student, y, m){
+    let c=0; for(let d=1;d<=31;d++) if(localStorage.getItem(`${student}_${y}_${m}_${d}`)==="true") c++;
+    return c;
+  }
+  function vnd(n){ return (n||0).toLocaleString('vi-VN')+' đ'; }
+  function shortMoney(v){ return v ? (v/1000000>=1 ? (v/1000000).toFixed(1)+'tr' : Math.round(v/1000)+'k') : '0'; }
+  function paidKey(s,y,m){ return `${s}_paid_${y}_${m}`; }
+  function togglePaid(s){
+    const y=+yearSelect.value, m=+monthSelect.value, k=paidKey(s,y,m);
+    localStorage.getItem(k)==="true" ? localStorage.removeItem(k) : localStorage.setItem(k,"true");
+    haptic(10); triggerSync(); updateGlobalSummary();
+  }
+  function goalKey(){ return `goal_${yearSelect.value}_${monthSelect.value}`; }
+  function saveGoal(v){ localStorage.setItem(goalKey(), String(+v||0)); triggerSync(); updateGlobalSummary(); }
+
+  function toggleGlobalSummary(){
+    const el=document.getElementById("globalSummary");
+    const open = el.style.display==="none";
+    el.style.display = open ? "block" : "none";
+    localStorage.setItem('ui_dash', open ? '1' : '0');
+    if(open){ updateGlobalSummary(); el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  }
+
+  function dashData(){
+    const y=+yearSelect.value, m=+monthSelect.value;
+    const rows = students().map(s=>({
+      name: s,
+      money: monthTotal(s,y,m),
+      sessions: monthSessions(s,y,m),
+      paid: localStorage.getItem(paidKey(s,y,m))==="true"
+    })).sort((a,b)=>b.money-a.money);
+    const total = rows.reduce((t,r)=>t+r.money,0);
+    const sessions = rows.reduce((t,r)=>t+r.sessions,0);
+    const active = rows.filter(r=>r.sessions>0).length;
+    const collected = rows.filter(r=>r.paid).reduce((t,r)=>t+r.money,0);
+    return { y, m, rows, total, sessions, active, collected };
+  }
+
   function updateGlobalSummary(){
-    let y=+yearSelect.value, m=+monthSelect.value, total=0;
-    Array.from(studentSelect.options).forEach(opt=>{
-      let p=+(localStorage.getItem(opt.value+"_price")||0);
-      for(let d=1;d<=31;d++) if(localStorage.getItem(`${opt.value}_${y}_${m}_${d}`)==="true"){
-        let n=localStorage.getItem(`${opt.value}_${y}_${m}_${d}_note`)||"";
-        let match=n.match(/#(\d+(\.\d+)?)h/i);
-        total+=match ? p*(parseFloat(match[1])/2) : p;
-      }
+    const d = dashData(), host = document.getElementById("globalSummary");
+    if(!host) return;
+    const goal = +(localStorage.getItem(goalKey())||0);
+    const pct = goal>0 ? Math.min(100, Math.round(d.total/goal*100)) : 0;
+    const max = Math.max(...d.rows.map(r=>r.money), 1);
+    const avg = d.active ? Math.round(d.total/d.active) : 0;
+
+    // biểu đồ 12 tháng (tất cả học sinh)
+    const year = d.y, yBars = [];
+    for(let i=0;i<12;i++) yBars.push(students().reduce((t,s)=>t+monthTotal(s,year,i),0));
+    const yMax = Math.max(...yBars, 1);
+    const yearTotal = yBars.reduce((a,b)=>a+b,0);
+
+    host.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">savings</span> Doanh thu T${d.m+1}/${d.y}</div><div class="kpi-value" style="color:var(--success);">${vnd(d.total)}</div></div>
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">event_available</span> Tổng số buổi</div><div class="kpi-value">${d.sessions} buổi</div></div>
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">groups</span> HS đang học</div><div class="kpi-value">${d.active}/${d.rows.length}</div></div>
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">trending_up</span> TB mỗi học sinh</div><div class="kpi-value">${vnd(avg)}</div></div>
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">task_alt</span> Đã thu</div><div class="kpi-value" style="color:var(--success);">${vnd(d.collected)}</div></div>
+        <div class="kpi"><div class="kpi-label"><span class="material-symbols-rounded icon-sm">pending_actions</span> Còn phải thu</div><div class="kpi-value" style="color:var(--danger);">${vnd(d.total-d.collected)}</div></div>
+      </div>
+
+      <div class="goal-wrap">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span class="kpi-label" style="flex:1;"><span class="material-symbols-rounded icon-sm">flag</span> Mục tiêu doanh thu tháng</span>
+          <input type="number" value="${goal||''}" placeholder="VD: 10000000" onchange="saveGoal(this.value)" style="width:170px; padding:8px 10px; font-size:13px;" />
+          <strong style="font-size:13px; color:${pct>=100?'var(--success)':'var(--primary)'};">${goal>0 ? pct+'%' : 'Chưa đặt'}</strong>
+        </div>
+        <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+        ${goal>0 ? `<p class="mat-meta" style="margin-top:8px;">${d.total>=goal ? '🎉 Đã vượt mục tiêu!' : 'Còn thiếu '+vnd(goal-d.total)+' để đạt mục tiêu.'}</p>` : ''}
+      </div>
+
+      <div style="margin-top:18px;">
+        <h3 style="margin-bottom:8px;"><span class="material-symbols-rounded" style="color:var(--primary);">leaderboard</span> Xếp hạng học sinh T${d.m+1}</h3>
+        ${d.rows.length ? d.rows.map((r,i)=>`
+          <div class="rank-row">
+            <span style="font-size:12px; font-weight:900; color:var(--text-muted); width:20px;">${i+1}</span>
+            <span class="rank-name" onclick="jumpStudent('${r.name.replace(/'/g,"\\'")}')" title="Xem ${matEsc(r.name)}">${matEsc(r.name)}</span>
+            <span class="rank-track"><span class="rank-fill" style="width:${Math.round(r.money/max*100)}%; animation-delay:${i*0.05}s;"></span></span>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">${r.sessions}b</span>
+            <span class="rank-money">${shortMoney(r.money)}</span>
+            <span class="pay-chip ${r.paid?'is-paid':''}" onclick="togglePaid('${r.name.replace(/'/g,"\\'")}')">${r.paid?'✓ Đã thu':'Chưa thu'}</span>
+          </div>`).join('') : '<p class="mat-meta">Chưa có học sinh nào.</p>'}
+      </div>
+
+      <div style="margin-top:20px;">
+        <h3 style="margin-bottom:8px;"><span class="material-symbols-rounded" style="color:var(--primary);">insert_chart</span> Doanh thu 12 tháng năm ${year} · <span style="font-weight:700; color:var(--success);">${vnd(yearTotal)}</span></h3>
+        <div class="chart-row">
+          ${yBars.map((v,i)=>`<div class="chart-bar-wrap" title="T${i+1}/${year}: ${vnd(v)}">
+            <div class="chart-val">${v?shortMoney(v):''}</div>
+            <div class="chart-bar ${i===d.m?'is-current':''}" style="height:${Math.max(4, Math.round(v/yMax*96))}px; animation-delay:${i*0.04}s;"></div>
+            <div class="chart-label">T${i+1}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top:18px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn-outline" onclick="copyReport()"><span class="material-symbols-rounded icon-sm">content_copy</span> Sao chép báo cáo</button>
+        <button class="btn-outline" onclick="exportCSV()"><span class="material-symbols-rounded icon-sm">download</span> Xuất CSV</button>
+      </div>`;
+  }
+
+  function jumpStudent(name){
+    studentSelect.value = name; studentSelect.onchange();
+    showToast('Đang xem: '+name, 'info');
+  }
+
+  function reportText(){
+    const d = dashData();
+    let t = `BÁO CÁO DOANH THU THÁNG ${d.m+1}/${d.y}\n`;
+    t += `Tổng: ${vnd(d.total)} · ${d.sessions} buổi · ${d.active} học sinh\n`;
+    t += `Đã thu: ${vnd(d.collected)} · Còn thu: ${vnd(d.total-d.collected)}\n\n`;
+    d.rows.forEach((r,i)=>{ t += `${i+1}. ${r.name}: ${r.sessions} buổi - ${vnd(r.money)}${r.paid?' (đã thu)':''}\n`; });
+    return t;
+  }
+  function copyReport(){
+    const t = reportText();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+      .then(()=>{ showToast('Đã sao chép báo cáo!', 'success'); haptic(); })
+      .catch(()=>{
+        const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); showToast('Đã sao chép báo cáo!', 'success'); }catch(e){ showToast('Không sao chép được', 'error'); }
+        ta.remove();
+      });
+  }
+  function exportCSV(){
+    const y=+yearSelect.value;
+    let csv = '\uFEFFHọc sinh,Đơn giá';
+    for(let i=0;i<12;i++) csv += `,T${i+1} (buổi),T${i+1} (tiền)`;
+    csv += ',Tổng năm\n';
+    students().forEach(s=>{
+      const price=+(localStorage.getItem(s+"_price")||0);
+      let row=`"${s.replace(/"/g,'""')}",${price}`, tot=0;
+      for(let i=0;i<12;i++){ const mv=monthTotal(s,y,i); tot+=mv; row += `,${monthSessions(s,y,i)},${mv}`; }
+      csv += row+','+tot+'\n';
     });
-    document.getElementById("globalSummary").innerHTML=`💰 Tổng doanh thu tháng ${m+1}/${y}: <span style="font-size:20px;">${total.toLocaleString()} VNĐ</span>`;
+    const blob=new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`doanh-thu-${y}.csv`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    showToast('Đã xuất CSV năm '+y, 'success');
   }
 
   /* ===== REVIEW / NHẬN XÉT ===== */
@@ -1457,7 +1636,11 @@
       { icon:'dark_mode',       label:'Đổi giao diện Sáng / Tối',    keys:'Ctrl J',  run: toggleTheme },
       { icon:'chevron_left',    label:'Tháng trước',                 keys:'←',       run: ()=>shiftMonth(-1) },
       { icon:'chevron_right',   label:'Tháng sau',                   keys:'→',       run: ()=>shiftMonth(1) },
-      { icon:'account_balance', label:'Thống kê doanh thu tất cả HS',keys:'',        run: toggleGlobalSummary },
+      { icon:'account_balance', label:'Bảng doanh thu tất cả học sinh',keys:'Ctrl B', run: toggleGlobalSummary },
+      { icon:'download',        label:'Xuất CSV doanh thu cả năm',   keys:'Ctrl E',  run: exportCSV },
+      { icon:'content_copy',    label:'Sao chép báo cáo tháng',      keys:'',        run: copyReport },
+      { icon:'flag',            label:'Đặt mục tiêu doanh thu tháng',keys:'',        run: ()=>{ const el=document.getElementById('globalSummary'); if(el.style.display!=='block') toggleGlobalSummary(); setTimeout(()=>el.querySelector('input[type=number]')?.focus(), 200); } },
+      { icon:'blur_on',         label:'Bật / tắt hiệu ứng nền động', keys:'',        run: toggleFx },
       { icon:'folder_shared',   label:'Thư viện tài liệu chia sẻ',    keys:'Ctrl L',  run: openLibrary },
       { icon:'mop',             label:'Làm mới lịch tháng này',      keys:'',        run: clearCheckboxes },
     ];
@@ -1507,6 +1690,8 @@
       if(key === 's'){ e.preventDefault(); saveReview(); return; }
       if(key === 'd'){ e.preventDefault(); downloadImage(); return; }
       if(key === 'l'){ e.preventDefault(); document.getElementById('libraryModal').style.display==='flex' ? closeLibrary() : openLibrary(); return; }
+      if(key === 'b'){ e.preventDefault(); toggleGlobalSummary(); return; }
+      if(key === 'e'){ e.preventDefault(); exportCSV(); return; }
       return;
     }
 
