@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -519,6 +520,17 @@
     </div>
     <div class="input-group" style="margin-top:14px;"><label>Họ và Tên</label><input type="text" id="adminNameInput" placeholder="VD: Lê Văn Hưng" /></div>
     <div class="input-group" style="margin-top:14px;"><label>Chức danh</label><input type="text" id="adminRoleInput" placeholder="VD: Gia sư / Người lập phiếu" /></div>
+
+    <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--border);">
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:.5px;">MÃ QR CHUYỂN KHOẢN (VietQR)</label>
+      <div class="input-group" style="margin-top:10px;"><label>Ngân hàng</label>
+        <select id="payBankInput"></select>
+      </div>
+      <div class="input-group" style="margin-top:12px;"><label>Số tài khoản</label><input type="text" id="payAccInput" inputmode="numeric" placeholder="VD: 0123456789" /></div>
+      <div class="input-group" style="margin-top:12px;"><label>Chủ tài khoản</label><input type="text" id="payHolderInput" placeholder="VD: LE BA VINH HUNG" /></div>
+      <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">Để trống số tài khoản nếu không muốn in mã QR trên hóa đơn.</p>
+    </div>
+
     <div class="btn-group" style="margin-top:22px; justify-content:flex-end;">
       <button class="btn-outline" onclick="closeSignatureModal()">Hủy</button>
       <button class="btn-primary" onclick="saveSignature()"><span class="material-symbols-rounded icon-sm">save</span> Lưu</button>
@@ -1135,10 +1147,118 @@
   canvas.onpointerup=canvas.onpointercancel=()=>{ isD=false; };
   function clearSignature(){ ctx.clearRect(0,0,canvas.width,canvas.height); isB=true; }
 
+  /* ===== VIETQR: danh sách BIN ngân hàng + payload EMVCo ===== */
+  const VN_BANKS = [
+    { bin:'970436', name:'Vietcombank' }, { bin:'970415', name:'VietinBank' },
+    { bin:'970418', name:'BIDV' },        { bin:'970405', name:'Agribank' },
+    { bin:'970422', name:'MB Bank' },     { bin:'970407', name:'Techcombank' },
+    { bin:'970416', name:'ACB' },         { bin:'970432', name:'VPBank' },
+    { bin:'970423', name:'TPBank' },      { bin:'970403', name:'Sacombank' },
+    { bin:'970443', name:'SHB' },         { bin:'970441', name:'VIB' },
+    { bin:'970431', name:'Eximbank' },    { bin:'970437', name:'HDBank' },
+    { bin:'970426', name:'MSB' },         { bin:'970429', name:'SCB' },
+    { bin:'970454', name:'VietCapital Bank' }, { bin:'970448', name:'OCB' },
+    { bin:'970440', name:'SeABank' },     { bin:'970414', name:'Oceanbank' },
+    { bin:'970400', name:'SaigonBank' },  { bin:'970409', name:'BacA Bank' },
+    { bin:'970419', name:'NCB' },         { bin:'970424', name:'Shinhan Bank' },
+    { bin:'970457', name:'Woori Bank' },  { bin:'546034', name:'Cake by VPBank' },
+    { bin:'963388', name:'Timo' },        { bin:'971011', name:'Viettel Money' },
+    { bin:'971005', name:'MoMo (Ví)' }
+  ];
+  function fillBankSelect(){
+    const sel = document.getElementById('payBankInput'); if(!sel || sel.dataset.filled) return;
+    sel.innerHTML = VN_BANKS.map(b=>`<option value="${b.bin}">${b.name}</option>`).join('');
+    sel.dataset.filled = '1';
+  }
+  function crc16ccitt(str){
+    let crc = 0xFFFF;
+    for(let i=0;i<str.length;i++){
+      crc ^= str.charCodeAt(i) << 8;
+      for(let j=0;j<8;j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return crc.toString(16).toUpperCase().padStart(4,'0');
+  }
+  const tlv = (id, val) => id + String(val.length).padStart(2,'0') + val;
+  function buildVietQRPayload(bin, acc, amount, note){
+    const acqInfo = tlv('00', bin) + tlv('01', acc);
+    const merchant = tlv('00','A000000727') + tlv('01', acqInfo) + tlv('02','QRIBFTTA');
+    let p = tlv('00','01') + tlv('01','12') + tlv('38', merchant) + tlv('53','704');
+    if(amount > 0) p += tlv('54', String(Math.round(amount)));
+    p += tlv('58','VN');
+    if(note) p += tlv('62', tlv('08', note.substring(0,45)));
+    p += '6304';
+    return p + crc16ccitt(p);
+  }
+  function getPayInfo(){
+    return {
+      bin: localStorage.getItem('payBank') || '',
+      acc: (localStorage.getItem('payAcc') || '').replace(/\s/g,''),
+      holder: localStorage.getItem('payHolder') || (localStorage.getItem('adminName') || ''),
+      bankName: (VN_BANKS.find(b=>b.bin === localStorage.getItem('payBank'))||{}).name || ''
+    };
+  }
+  /* Ảnh QR được sinh sẵn (đồng bộ hoá cho getInvHTML) */
+  let qrCacheKey = '', qrCacheImg = '';
+  function noAccent(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^A-Za-z0-9 ]/g,' ').replace(/\s+/g,' ').trim().toUpperCase(); }
+  function invoiceTransferNote(){
+    const s = studentSelect.value || '';
+    return noAccent(`HP ${s} T${+monthSelect.value+1}/${yearSelect.value}`);
+  }
+  function monthTotals(){
+    const s = studentSelect.value; if(!s) return { c:0, tm:0 };
+    const y = +yearSelect.value, m = +monthSelect.value, p = +priceInput.value || 0;
+    const lD = new Date(y, m+1, 0).getDate(); let c = 0, tm = 0;
+    for(let d=1; d<=lD; d++){
+      if(localStorage.getItem(`${s}_${y}_${m}_${d}`) === 'true'){
+        c++;
+        const nt = localStorage.getItem(`${s}_${y}_${m}_${d}_note`) || '';
+        const match = nt.match(/#(\d+(\.\d+)?)h/i);
+        tm += match ? p*(parseFloat(match[1])/2) : p;
+      }
+    }
+    return { c, tm };
+  }
+  /* Sinh QR bằng qrcodejs (offline, không cần gọi API ảnh -> in/xuất ảnh luôn đúng) */
+  function renderQrDataUrl(text){
+    return new Promise(resolve => {
+      if(typeof QRCode === 'undefined') return resolve('');
+      const box = document.createElement('div');
+      box.style.cssText = 'position:absolute;left:-99999px;top:-99999px;';
+      document.body.appendChild(box);
+      try {
+        new QRCode(box, { text, width: 440, height: 440, colorDark: '#0f172a', colorLight: '#ffffff',
+                          correctLevel: QRCode.CorrectLevel.M });
+      } catch(e){ box.remove(); return resolve(''); }
+      setTimeout(()=>{
+        let url = '';
+        const cv = box.querySelector('canvas');
+        if(cv){ try { url = cv.toDataURL('image/png'); } catch(e){} }
+        if(!url){ const im = box.querySelector('img'); if(im) url = im.src || ''; }
+        box.remove();
+        resolve(url);
+      }, 60);
+    });
+  }
+  async function ensureInvoiceQR(){
+    const info = getPayInfo();
+    if(!info.bin || !info.acc){ qrCacheImg = ''; return ''; }
+    const { tm } = monthTotals();
+    const note = invoiceTransferNote();
+    const key = `${info.bin}|${info.acc}|${tm}|${note}`;
+    if(key === qrCacheKey && qrCacheImg) return qrCacheImg;
+    qrCacheImg = await renderQrDataUrl(buildVietQRPayload(info.bin, info.acc, tm, note));
+    qrCacheKey = qrCacheImg ? key : '';
+    return qrCacheImg;
+  }
+
   function openSignatureModal(){
     document.getElementById('signatureModal').style.display='flex';
     document.getElementById('adminNameInput').value=localStorage.getItem("adminName")||"Hưng";
     document.getElementById('adminRoleInput').value=localStorage.getItem("adminRole")||"Gia sư";
+    fillBankSelect();
+    document.getElementById('payBankInput').value=localStorage.getItem("payBank")||"970436";
+    document.getElementById('payAccInput').value=localStorage.getItem("payAcc")||"";
+    document.getElementById('payHolderInput').value=localStorage.getItem("payHolder")||"";
     let s=localStorage.getItem("adminSig");
     if(s){ isB=false; let i=new Image(); i.onload=()=>ctx.drawImage(i,0,0); i.src=s; } else clearSignature();
   }
@@ -1146,9 +1266,14 @@
   function saveSignature(){
     localStorage.setItem("adminName",document.getElementById('adminNameInput').value||"Hưng");
     localStorage.setItem("adminRole",document.getElementById('adminRoleInput').value||"Gia sư");
+    localStorage.setItem("payBank",document.getElementById('payBankInput').value||"");
+    localStorage.setItem("payAcc",(document.getElementById('payAccInput').value||"").replace(/\s/g,''));
+    localStorage.setItem("payHolder",document.getElementById('payHolderInput').value||"");
+    qrCacheKey=''; qrCacheImg='';
     if(!isB) localStorage.setItem("adminSig",canvas.toDataURL()); else localStorage.removeItem("adminSig");
-    closeSignatureModal(); triggerSync(); showToast("Lưu chữ ký thành công!", 'success');
+    closeSignatureModal(); triggerSync(); showToast("Đã lưu chữ ký & tài khoản chuyển khoản!", 'success');
   }
+
 
   /* ===== BEAUTIFUL INVOICE HTML ===== */
   function getInvHTML(){
@@ -1208,80 +1333,106 @@
     let adminName=localStorage.getItem("adminName")||"Lê Bá Vĩnh Hưng";
     let adminRole=localStorage.getItem("adminRole")||"Gia sư";
     let dateStr=`Ngày ${String(today.getDate()).padStart(2,'0')} tháng ${String(today.getMonth()+1).padStart(2,'0')} năm ${today.getFullYear()}`;
+    let paid = localStorage.getItem(`${s}_paid_${y}_${m}`) === 'true';
+    let pay = getPayInfo();
+    let qrImg = qrCacheImg;
+    let transferNote = invoiceTransferNote();
+    let invNo = `GS${y}${String(m+1).padStart(2,'0')}-${noAccent(s).replace(/ /g,'').substring(0,6)||'HS'}`;
 
     return `
-    <div style="font-family:'Inter',sans-serif;background:#fff;color:#111827;box-sizing:border-box;">
+    <div style="font-family:'Inter',sans-serif;background:#fff;color:#0f172a;box-sizing:border-box;">
 
       <!-- HEADER -->
-      <div style="background:linear-gradient(135deg,#1e2a4a 0%,#2d3f6b 50%,#1e2a4a 100%);padding:28px 36px 22px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
-        <div style="position:absolute;bottom:-50px;left:-20px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.03);"></div>
+      <div style="background:linear-gradient(120deg,#111c3a 0%,#243a72 45%,#1b2a55 100%);padding:30px 36px 24px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-70px;right:-40px;width:230px;height:230px;border-radius:50%;background:rgba(99,102,241,0.28);"></div>
+        <div style="position:absolute;bottom:-90px;left:-40px;width:250px;height:250px;border-radius:50%;background:rgba(16,185,129,0.16);"></div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
           <div>
-            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.5);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">PHIẾU THANH TOÁN</div>
-            <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1.2;">GIA SƯ</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;font-weight:500;">Tháng ${m+1} / ${y}</div>
+            <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.55);letter-spacing:4px;text-transform:uppercase;">Phiếu học phí</div>
+            <div style="font-size:30px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1.15;margin-top:6px;">LỊCH DẠY &amp; HỌC PHÍ</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:8px;font-weight:600;">Kỳ thanh toán: Tháng ${m+1} / ${y} &nbsp;•&nbsp; Số phiếu: ${invNo}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px 18px;">
-              <div style="font-size:11px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px;">HỌC SINH</div>
+          <div style="text-align:right;min-width:210px;">
+            <div style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);border-radius:14px;padding:12px 18px;">
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">HỌC SINH</div>
               <div style="font-size:20px;font-weight:800;color:#fff;">${s}</div>
+            </div>
+            <div style="display:inline-block;margin-top:10px;background:${paid?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};border:1px solid ${paid?'rgba(16,185,129,0.55)':'rgba(239,68,68,0.55)'};color:${paid?'#6ee7b7':'#fca5a5'};border-radius:999px;padding:5px 14px;font-size:11px;font-weight:800;letter-spacing:1px;">
+              ${paid?'ĐÃ THANH TOÁN':'CHƯA THANH TOÁN'}
             </div>
           </div>
         </div>
-        <!-- Decorative bar -->
-        <div style="display:flex;gap:4px;margin-top:18px;">
-          <div style="height:3px;flex:3;background:#4f46e5;border-radius:2px;"></div>
-          <div style="height:3px;flex:1;background:#10b981;border-radius:2px;"></div>
-          <div style="height:3px;flex:1;background:#f59e0b;border-radius:2px;"></div>
+        <div style="display:flex;gap:5px;margin-top:20px;position:relative;">
+          <div style="height:4px;flex:4;background:#6366f1;border-radius:3px;"></div>
+          <div style="height:4px;flex:1;background:#10b981;border-radius:3px;"></div>
+          <div style="height:4px;flex:1;background:#f59e0b;border-radius:3px;"></div>
         </div>
       </div>
 
       <!-- INFO ROW -->
-      <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;">
-        <div style="flex:1;padding:14px 20px;border-right:1px solid #f1f5f9;">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Đơn giá / buổi</div>
-          <div style="font-size:17px;font-weight:800;color:#1e2a4a;">${p?p.toLocaleString()+" đ":"-"}</div>
+      <div style="display:flex;background:#f8fafc;border-bottom:1px solid #e7ecf3;">
+        <div style="flex:1;padding:16px 22px;border-right:1px solid #e7ecf3;">
+          <div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;">Đơn giá / buổi</div>
+          <div style="font-size:18px;font-weight:800;color:#1e2a4a;">${p?p.toLocaleString()+" đ":"-"}</div>
         </div>
-        <div style="flex:1;padding:14px 20px;border-right:1px solid #f1f5f9;">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Tổng số buổi</div>
-          <div style="font-size:17px;font-weight:800;color:#4f46e5;">${c} buổi</div>
+        <div style="flex:1;padding:16px 22px;border-right:1px solid #e7ecf3;">
+          <div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;">Tổng số buổi</div>
+          <div style="font-size:18px;font-weight:800;color:#4f46e5;">${c} buổi</div>
         </div>
-        <div style="flex:1;padding:14px 20px;">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Thành tiền</div>
-          <div style="font-size:20px;font-weight:900;color:#dc2626;">${tm.toLocaleString()} đ</div>
+        <div style="flex:1.3;padding:16px 22px;background:linear-gradient(180deg,#fff7f7,#fff);">
+          <div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;">Tổng thành tiền</div>
+          <div style="font-size:24px;font-weight:900;color:#dc2626;letter-spacing:-0.5px;">${tm.toLocaleString()} đ</div>
         </div>
       </div>
 
       <!-- CALENDAR -->
       <div style="padding:20px 24px 0;">
-        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">📅 Lịch học chi tiết</div>
+        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">Lịch dạy chi tiết tháng ${m+1}</div>
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <thead>
-            <tr>${DAYS.map(day=>`<th style="border:1px solid #e2e8f0;background:#f8fafc;padding:8px 4px;font-size:11px;font-weight:700;color:#64748b;text-align:center;letter-spacing:1px;">${day}</th>`).join('')}</tr>
+            <tr>${DAYS.map(day=>`<th style="border:1px solid #e2e8f0;background:#eef2ff;padding:9px 4px;font-size:11px;font-weight:800;color:#4f46e5;text-align:center;letter-spacing:1px;">${day}</th>`).join('')}</tr>
           </thead>
           <tbody>${trs}</tbody>
         </table>
       </div>
 
       <!-- LEGEND -->
-      <div style="padding:10px 24px;display:flex;gap:16px;align-items:center;">
+      <div style="padding:10px 24px;display:flex;gap:18px;align-items:center;">
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
-          <div style="width:16px;height:16px;background:#f0fdf4;border:1px solid #86efac;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;">✓</div>
+          <div style="width:16px;height:16px;background:#f0fdf4;border:1px solid #86efac;border-radius:4px;text-align:center;font-size:10px;line-height:16px;color:#10b981;">✓</div>
           Đã dạy
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
-          <div style="width:16px;height:16px;background:#fee2e2;border:1px solid #fca5a5;border-radius:3px;"></div>
-          Số giờ khác
+          <div style="width:16px;height:16px;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;"></div>
+          Buổi có số giờ khác
         </div>
       </div>
 
       ${(tagBadges||reviewNote) ? `
       <!-- REVIEW -->
-      <div style="margin:8px 24px 0;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:16px;">
-        <div style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">⭐ Nhận xét & đánh giá</div>
+      <div style="margin:8px 24px 0;background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:16px;">
+        <div style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">Nhận xét &amp; đánh giá</div>
         ${tagBadges?`<div style="margin-bottom:${reviewNote?'10px':'0'};">${tagBadges}</div>`:''}
-        ${reviewNote?`<div style="font-size:13px;color:#44403c;line-height:1.7;font-style:italic;background:#fff;padding:10px 14px;border-radius:8px;border:1px solid #fde68a;">"${reviewNote}"</div>`:''}
+        ${reviewNote?`<div style="font-size:13px;color:#44403c;line-height:1.7;font-style:italic;background:#fff;padding:10px 14px;border-radius:9px;border:1px solid #fde68a;">"${reviewNote}"</div>`:''}
+      </div>` : ''}
+
+      ${pay.acc ? `
+      <!-- PAYMENT / QR -->
+      <div style="margin:14px 24px 0;border:1.5px solid #dbeafe;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,#f5f8ff,#ffffff);">
+        <div style="background:#eef4ff;padding:9px 18px;font-size:11px;font-weight:800;color:#1d4ed8;letter-spacing:1.5px;text-transform:uppercase;">Thanh toán chuyển khoản • Quét mã VietQR</div>
+        <div style="display:flex;align-items:center;gap:20px;padding:16px 18px;">
+          <div style="background:#fff;border:1.5px solid #dbeafe;border-radius:14px;padding:10px;">
+            ${qrImg?`<img src="${qrImg}" width="132" height="132" style="display:block;"/>`
+                   :`<div style="width:132px;height:132px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8;text-align:center;">Mở lại phiếu<br/>để tạo mã QR</div>`}
+          </div>
+          <div style="flex:1;font-size:13px;line-height:1.9;color:#334155;">
+            <div><span style="color:#94a3b8;font-weight:700;">Ngân hàng:</span> <strong style="color:#0f172a;">${pay.bankName||'-'}</strong></div>
+            <div><span style="color:#94a3b8;font-weight:700;">Số tài khoản:</span> <strong style="color:#0f172a;letter-spacing:1px;">${pay.acc}</strong></div>
+            <div><span style="color:#94a3b8;font-weight:700;">Chủ tài khoản:</span> <strong style="color:#0f172a;">${pay.holder||adminName}</strong></div>
+            <div><span style="color:#94a3b8;font-weight:700;">Nội dung CK:</span> <strong style="color:#1d4ed8;">${transferNote}</strong></div>
+            <div style="margin-top:6px;display:inline-block;background:#fee2e2;color:#dc2626;border-radius:8px;padding:4px 12px;font-size:14px;font-weight:900;">Số tiền: ${tm.toLocaleString()} đ</div>
+          </div>
+        </div>
       </div>` : ''}
 
       <!-- DIVIDER -->
@@ -1309,9 +1460,9 @@
       </div>
 
       <!-- FOOTER -->
-      <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:2px;text-transform:uppercase;">POWERED BY HUNG LE</div>
-        <div style="font-size:10px;color:#cbd5e1;">Tự động tạo lúc ${today.toLocaleTimeString('vi-VN')}</div>
+      <div style="background:#0f172a;padding:11px 24px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.55);font-weight:700;letter-spacing:2px;text-transform:uppercase;">POWERED BY HUNG LE</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);">Tự động tạo lúc ${today.toLocaleTimeString('vi-VN')}</div>
       </div>
 
     </div>`;
@@ -1335,13 +1486,15 @@
     }
   }
 
-  function downloadImage(){
+  async function downloadImage(){
+    if(!studentSelect.value) return showToast("Chọn học sinh trước đã!", 'error');
+    await ensureInvoiceQR();
     let h=getInvHTML(); if(!h) return;
     let p=document.getElementById("printArea");
     p.innerHTML=h; p.classList.add('capture-mode');
     showToast("Đang tạo ảnh hóa đơn...", 'info');
     setTimeout(()=>{
-      html2canvas(p,{scale:2.5, useCORS:true, allowTaint:true, backgroundColor:'#fff'}).then(c=>{
+      html2canvas(p,{scale:3, useCORS:true, allowTaint:true, backgroundColor:'#fff'}).then(c=>{
         let l=document.createElement('a');
         l.download=`HoaDon_${studentSelect.value}_T${+monthSelect.value+1}_${yearSelect.value}.png`;
         l.href=c.toDataURL('image/png');
@@ -1353,7 +1506,9 @@
     }, 350);
   }
 
-  function printInvoice(){
+  async function printInvoice(){
+    if(!studentSelect.value) return showToast("Chọn học sinh trước đã!", 'error');
+    await ensureInvoiceQR();
     let h=getInvHTML(); if(!h) return;
     document.getElementById("printArea").innerHTML=h;
     setTimeout(()=>window.print(), 300);
